@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDSM - π two 2</title>
+    <link rel="stylesheet" href="/frontend/public/css/bdsm.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html">
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar productos...">
+                    <button class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="header-icons">
+                    <a href="login.html" class="icon-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Cuenta</span>
+                    </a>
+                    <a href="cart.html" class="icon-btn cart-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navegación de categorías -->
+    <nav class="category-nav">
+        <div class="container">
+            <a href="bdsm.html" class="nav-link active">BDSM</a>
+            <a href="bienestar.html" class="nav-link">Bienestar</a>
+            <a href="juguetes.html" class="nav-link">Juguetes</a>
+            <a href="lenceria.html" class="nav-link">Lencería</a>
+        </div>
+    </nav>
+
+    <!-- Banner de categoría -->
+    <section class="category-banner">
+        <div class="container">
+            <div class="banner-content">
+                <h1>🔗 BDSM</h1>
+                <p>Explora tu lado más atrevido con nuestra colección premium</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="filters-section">
+        <div class="container">
+            <div class="filters">
+                <select class="filter-select">
+                    <option>Ordenar por</option>
+                    <option>Precio: Menor a Mayor</option>
+                    <option>Precio: Mayor a Menor</option>
+                    <option>Más vendidos</option>
+                    <option>Nuevos</option>
+                </select>
+                <select class="filter-select">
+                    <option>Todas las subcategorías</option>
+                    <option>Esposas y Restricciones</option>
+                    <option>Látigos y Fustas</option>
+                    <option>Collares y Correas</option>
+                    <option>Antifaces y Vendas</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos -->
+    <section class="products-section">
+        <div class="container">
+            <div class="products-grid">
+                
+                <!-- PRODUCTO 1 - CAMBIA AQUÍ LA IMAGEN Y NOMBRE -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <!-- CAMBIA EL src POR LA RUTA DE TU IMAGEN -->
+                        <img src="ruta/a/tu/imagen1.jpg" alt="Producto BDSM">
+                        <!-- Si no tienes imagen aún, deja este placeholder: -->
+                        <!-- <div class="placeholder-img">🔗</div> -->
+                    </div>
+                    <div class="product-info">
+                        <!-- CAMBIA EL NOMBRE DEL PRODUCTO AQUÍ -->
+                        <h3 class="product-name">Esposas de Terciopelo Premium</h3>
+                        <!-- CAMBIA LA DESCRIPCIÓN AQUÍ -->
+                        <p class="product-description">Suaves y ajustables, perfectas para principiantes</p>
+                        <div class="product-rating">
+                            ⭐⭐⭐⭐⭐ <span>(125 reseñas)</span>
+                        </div>
+                        <div class="product-footer">
+                            <!-- CAMBIA EL PRECIO AQUÍ -->
+                            <span class="product-price">$799</span>
+                            <button class="add-to-cart" onclick="addToCart(this)">Agregar al Carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTO 2 - CAMBIA AQUÍ LA IMAGEN Y NOMBRE -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <!-- CAMBIA EL src POR LA RUTA DE TU IMAGEN -->
+                        <img src="ruta/a/tu/imagen2.jpg" alt="Producto BDSM">
+                        <!-- Si no tienes imagen aún, deja este placeholder: -->
+                        <!-- <div class="placeholder-img">💜</div> -->
+                    </div>
+                    <div class="product-info">
+                        <!-- CAMBIA EL NOMBRE DEL PRODUCTO AQUÍ -->
+                        <h3 class="product-name">Set Látigo y Pluma</h3>
+                        <!-- CAMBIA LA DESCRIPCIÓN AQUÍ -->
+                        <p class="product-description">Combina placer y sensaciones intensas</p>
+                        <div class="product-rating">
+                            ⭐⭐⭐⭐⭐ <span>(89 reseñas)</span>
+                        </div>
+                        <div class="product-footer">
+                            <!-- CAMBIA EL PRECIO AQUÍ -->
+                            <span class="product-price">$1,299</span>
+                            <button class="add-to-cart" onclick="addToCart(this)">Agregar al Carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTO 3 - CAMBIA AQUÍ LA IMAGEN Y NOMBRE -->
+                <div class="product-card">
+                    <div class="product-badge">NUEVO</div>
+                    <div class="product-image">
+                        <!-- CAMBIA EL src POR LA RUTA DE TU IMAGEN -->
+                        <img src="ruta/a/tu/imagen3.jpg" alt="Producto BDSM">
+                        <!-- Si no tienes imagen aún, deja este placeholder: -->
+                        <!-- <div class="placeholder-img">⛓️</div> -->
+                    </div>
+                    <div class="product-info">
+                        <!-- CAMBIA EL NOMBRE DEL PRODUCTO AQUÍ -->
+                        <h3 class="product-name">Collar con Cadena de Cuero</h3>
+                        <!-- CAMBIA LA DESCRIPCIÓN AQUÍ -->
+                        <p class="product-description">Diseño elegante y resistente</p>
+                        <div class="product-rating">
+                            ⭐⭐⭐⭐⭐ <span>(156 reseñas)</span>
+                        </div>
+                        <div class="product-footer">
+                            <!-- CAMBIA EL PRECIO AQUÍ -->
+                            <span class="product-price">$899</span>
+                            <button class="add-to-cart" onclick="addToCart(this)">Agregar al Carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTO 4 - CAMBIA AQUÍ LA IMAGEN Y NOMBRE -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <!-- CAMBIA EL src POR LA RUTA DE TU IMAGEN -->
+                        <img src="ruta/a/tu/imagen4.jpg" alt="Producto BDSM">
+                        <!-- Si no tienes imagen aún, deja este placeholder: -->
+                        <!-- <div class="placeholder-img">🎀</div> -->
+                    </div>
+                    <div class="product-info">
+                        <!-- CAMBIA EL NOMBRE DEL PRODUCTO AQUÍ -->
+                        <h3 class="product-name">Antifaz de Satén Deluxe</h3>
+                        <!-- CAMBIA LA DESCRIPCIÓN AQUÍ -->
+                        <p class="product-description">Suave textura para máxima comodidad</p>
+                        <div class="product-rating">
+                            ⭐⭐⭐⭐⭐ <span>(203 reseñas)</span>
+                        </div>
+                        <div class="product-footer">
+                            <!-- CAMBIA EL PRECIO AQUÍ -->
+                            <span class="product-price">$549</span>
+                            <button class="add-to-cart" onclick="addToCart(this)">Agregar al Carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTO 5 - CAMBIA AQUÍ LA IMAGEN Y NOMBRE -->
+                <div class="product-card">
+                    <div class="product-badge">BESTSELLER</div>
+                    <div class="product-image">
+                        <!-- CAMBIA EL src POR LA RUTA DE TU IMAGEN -->
+                        <img src="ruta/a/tu/imagen5.jpg" alt="Producto BDSM">
+                        <!-- Si no tienes imagen aún, deja este placeholder: -->
+                        <!-- <div class="placeholder-img">🔥</div> -->
+                    </div>
+                    <div class="product-info">
+                        <!-- CAMBIA EL NOMBRE DEL PRODUCTO AQUÍ -->
+                        <h3 class="product-name">Kit BDSM Completo</h3>
+                        <!-- CAMBIA LA DESCRIPCIÓN AQUÍ -->
+                        <p class="product-description">Todo lo que necesitas en un solo set</p>
+                        <div class="product-rating">
+                            ⭐⭐⭐⭐⭐ <span>(412 reseñas)</span>
+                        </div>
+                        <div class="product-footer">
+                            <!-- CAMBIA EL PRECIO AQUÍ -->
+                            <span class="product-price">$2,499</span>
+                            <button class="add-to-cart" onclick="addToCart(this)">Agregar al Carrito</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>π two 2</h3>
+                    <p>Tu tienda de confianza para el bienestar íntimo</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Ayuda</h4>
+                    <ul>
+                        <li><a href="#">Preguntas frecuentes</a></li>
+                        <li><a href="#">Envíos</a></li>
+                        <li><a href="#">Devoluciones</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Términos y condiciones</a></li>
+                        <li><a href="#">Política de privacidad</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 π two 2. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Funcionalidad del carrito
+        let cartCount = parseInt(localStorage.getItem('cartCount')) || 0;
+        const cartCountElement = document.querySelector('.cart-count');
+        cartCountElement.textContent = cartCount;
+
+        function addToCart(button) {
+            cartCount++;
+            cartCountElement.textContent = cartCount;
+            localStorage.setItem('cartCount', cartCount);
+            
+            button.textContent = '✓ Agregado';
+            button.style.background = '#10b981';
+            
+            setTimeout(() => {
+                button.textContent = 'Agregar al Carrito';
+                button.style.background = '';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
