@@ -1,0 +1,40 @@
+# ----------------------------------------
+# 1. DEPENDENCIAS Y ARTEFACTOS DE NODE
+# ----------------------------------------
+/node_modules
+/package-lock.json
+# /npm-debug.log* # Opcional: Logs de depuración de npm
+
+# ----------------------------------------
+# 2. SEGURIDAD - VARIABLES DE ENTORNO
+# ----------------------------------------
+# ¡CRUCIAL! Contiene contraseñas de la base de datos
+.env
+
+# ----------------------------------------
+# 3. ARCHIVOS DE LA BASE DE DATOS (Opcional)
+# ----------------------------------------
+# Si usas bases de datos SQLite localmente, ignora sus archivos
+# *.sqlite
+# *.db
+
+# ----------------------------------------
+# 4. ARCHIVOS DE SISTEMA OPERATIVO Y EDITORES
+# ----------------------------------------
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Visual Studio Code (VS Code)
+.vscode/
+
+# ----------------------------------------
+# 5. ARCHIVOS TEMPORALES Y CACHÉ
+# ----------------------------------------
+# Archivos de copia de seguridad
+*~
+
+# Archivos temporales
+*.tmp
