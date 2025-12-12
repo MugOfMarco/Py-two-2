@@ -1,4 +1,4 @@
-import { pool } from '../config/dbconfig.js';
+import { pool } from '../config/bdconfig.js';
 
 /**
  * Registra un nuevo usuario en la base de datos.

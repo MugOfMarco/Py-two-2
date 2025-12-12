@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - π two 2</title> 
+    
+    <link rel="stylesheet" href="/css/lenceria.css"> 
+    <link rel="stylesheet" href="/css/main.css"> 
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/">
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
+                </div>
+                
+                <form action="/" method="GET" class="search-bar">
+                    <input type="text" name="q" placeholder="Buscar productos...">
+                    <button type="submit" class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </form>
+                
+                <div class="header-icons">
+                    <a href="/login" class="icon-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Cuenta</span>
+                    </a>
+                    <a href="/carrito" class="icon-btn cart-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="category-nav">
+        <div class="container">
+            <a href="/bdsm" class="nav-link">BDSM</a>
+            <a href="/bienestar" class="nav-link">Bienestar</a>
+            <a href="/juguetes" class="nav-link">Juguetes</a>
+            <a href="/lenceria" class="nav-link <% if (category === 'Lencería') { %>active<% } %>">Lencería</a>
+        </div>
+    </nav>
+
+    <section class="category-banner">
+        <div class="container">
+            <div class="banner-content">
+                <h1>👗 <%= title %></h1>
+                <p>Siéntete sensual con nuestras piezas exclusivas</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="filters-section">
+        <div class="container">
+            <div class="filters">
+                <select id="sort-filter" class="filter-select">
+                    <option value="">Ordenar por</option>
+                    <option value="price-asc">Precio: Menor a Mayor</option>
+                    <option value="price-desc">Precio: Mayor a Menor</option>
+                    <option value="sales-desc">Más vendidos</option>
+                    <option value="newest-desc">Nuevos</option>
+                </select>
+                <select id="subcategory-filter" class="filter-select">
+                    <option value="">Todas las subcategorías</option>
+                    <option value="Conjuntos">Conjuntos</option>
+                    <option value="Bodys">Bodys</option>
+                    <option value="Babydolls">Babydolls</option>
+                    <option value="Medias y Ligueros">Medias y Ligueros</option>
+                    <option value="Disfraces">Disfraces</option>
+                </select>
+                 <select id="size-filter" class="filter-select">
+                    <option value="">Todas las tallas</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section class="products-section">
+        <div class="container">
+            <div class="products-grid" id="products-grid">
+                </div>
+            
+            <div id="loading-message" style="text-align: center; padding: 20px;">Cargando productos...</div>
+            <div id="no-products-message" style="text-align: center; padding: 20px; display: none;">No se encontraron productos en esta categoría.</div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>π two 2</h3>
+                    <p>Tu tienda de confianza para el bienestar íntimo</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Ayuda</h4>
+                    <ul>
+                        <li><a href="#">Preguntas frecuentes</a></li>
+                        <li><a href="#">Envíos</a></li>
+                        <li><a href="#">Devoluciones</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Términos y condiciones</a></li>
+                        <li><a href="#">Política de privacidad</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 π two 2. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Define una variable global CATEGORY_SLUG que tienda.js utilizará para filtrar la API
+        const CATEGORY_SLUG = '<%= category %>'; 
+        // En este caso: 'Lencería'
+    </script>
+    
+    <script src="/js/tienda.js"></script> 
+</body>
+</html>

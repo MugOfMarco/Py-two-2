@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - π two 2</title> 
+    <link rel="stylesheet" href="/css/carrito.css">
+    </head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/"> 
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
+                </div>
+                
+                <form action="/" method="GET" class="search-bar"> 
+                    <input type="text" name="q" placeholder="Buscar productos...">
+                    <button type="submit" class="search-btn">
+                        </button>
+                </form>
+                
+                <div class="header-icons">
+                    <a href="/login" class="icon-btn"><span>Cuenta</span></a>
+                    <a href="/carrito" class="icon-btn cart-btn active"> 
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="category-nav">
+        <div class="container">
+            <a href="/bdsm" class="nav-link">BDSM</a>
+            <a href="/bienestar" class="nav-link">Bienestar</a>
+            <a href="/juguetes" class="nav-link">Juguetes</a>
+            <a href="/lenceria" class="nav-link">Lencería</a>
+        </div>
+    </nav>
+
+    <section class="cart-banner">
+        <div class="container">
+            <h1>🛒 Mi Carrito de Compras</h1>
+            <p>Revisa tus productos antes de finalizar tu compra</p>
+        </div>
+    </section>
+
+    <section class="cart-content">
+        <div class="container">
+            <div class="cart-layout">
+                
+                <div class="cart-items">
+                    <div class="cart-header" style="display: none;"> 
+                        <h2>Productos en tu carrito (<span id="items-count">0</span>)</h2>
+                        <button class="clear-cart" onclick="clearCart()">Vaciar carrito</button>
+                    </div>
+
+                    <div class="cart-items-list">
+                        </div>
+                    
+                    <div class="empty-cart" style="display: none;">
+                        <div class="empty-icon">🛒</div>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega productos para comenzar tu compra</p>
+                        <a href="/" class="btn-shop">Ir a la tienda</a> 
+                    </div>
+                </div>
+
+                <div class="cart-summary">
+                    <h2>Resumen de compra</h2>
+                    
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Envío</span>
+                        <span class="shipping-free">GRATIS</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>IVA (16%)</span>
+                        <span id="iva">$0.00</span> 
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-total">
+                        <span>Total Final</span>
+                        <span id="total-amount">$0.00</span> 
+                    </div>
+
+                    <button class="btn-checkout" onclick="checkout()">
+                        Proceder al pago
+                    </button>
+
+                    <div class="security-badges">
+                        </div>
+
+                    <a href="/" class="continue-shopping">← Seguir comprando</a> 
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <script src="/js/carrito.js"></script>
+</body>
+</html>

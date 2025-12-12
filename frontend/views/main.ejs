@@ -3,43 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>π two 2 - Sex Shop Premium</title>
-    <link rel="stylesheet" href="/frontend/public/css/main.css">
+    <title><%= title %> - π two 2 - Sex Shop Premium</title>
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <h1>π two 2</h1>
-                    <span class="tagline">Tu bienestar íntimo</span>
+                    <a href="/">
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
                 </div>
                 
-                <div class="search-bar">
-                    <input type="text" placeholder="Buscar productos...">
-                    <button class="search-btn">
+                <form action="/" method="GET" class="search-bar">
+                    <input type="text" name="q" placeholder="Buscar productos..." value="<%= searchQuery || '' %>" required>
+                    <button type="submit" class="search-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
                     </button>
-                </div>
+                </form>
                 
                 <div class="header-icons">
-                    <a href="login.html" class="icon-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                    <a href="/login" class="icon-btn">
                         <span>Cuenta</span>
                     </a>
-                    <a href="cart.html" class="icon-btn cart-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
+                    <a href="/carrito" class="icon-btn cart-btn">
                         <span class="cart-count">0</span>
                         <span>Carrito</span>
                     </a>
@@ -48,26 +40,26 @@
         </div>
     </header>
 
-    <!-- Categorías -->
+    <% if (!searchQuery) { %>
     <section class="categories">
         <div class="container">
             <div class="category-grid">
-                <a href="bdsm.html" class="category-card bdsm">
+                <a href="/bdsm" class="category-card bdsm">
                     <div class="category-icon">🔗</div>
                     <h3>BDSM</h3>
                     <p>Explora tu lado atrevido</p>
                 </a>
-                <a href="bienestar.html" class="category-card bienestar">
+                <a href="/bienestar" class="category-card bienestar">
                     <div class="category-icon">💆‍♀️</div>
                     <h3>Bienestar</h3>
                     <p>Cuida de ti</p>
                 </a>
-                <a href="juguetes.html" class="category-card juguetes">
+                <a href="/juguetes" class="category-card juguetes">
                     <div class="category-icon">✨</div>
                     <h3>Juguetes</h3>
                     <p>Diversión garantizada</p>
                 </a>
-                <a href="lenceria.html" class="category-card lenceria">
+                <a href="/lenceria" class="category-card lenceria">
                     <div class="category-icon">👗</div>
                     <h3>Lencería</h3>
                     <p>Siéntete sensual</p>
@@ -75,68 +67,46 @@
             </div>
         </div>
     </section>
+    <% } %>
 
-    <!-- Top Ventas -->
     <section class="top-sales">
         <div class="container">
-            <h2 class="section-title">Nuestro Top de Ventas</h2>
+            <h2 class="section-title">
+                <% if (searchQuery) { %>
+                    Resultados de Búsqueda para "<%= searchQuery %>"
+                <% } else { %>
+                    Nuestro Top de Ventas
+                <% } %>
+            </h2>
+
+            <% if (message) { %>
+                <div class="alert-message" style="padding: 15px; background-color: #ffe0e0; border: 1px solid #ff4d4d; color: #ff4d4d; margin-bottom: 20px;">
+                    <p><%= message %></p>
+                </div>
+            <% } %>
+
             <div class="products-grid">
+                
+                <% productos.forEach(function(producto) { %>
                 <div class="product-card">
-                    <div class="product-badge">Best Seller</div>
+                    <% if (producto.badge) { %>
+                        <div class="product-badge"><%= producto.badge %></div>
+                    <% } %>
                     <div class="product-image">
-                        <div class="placeholder-img">🌟</div>
+                        <div class="placeholder-img"><%= producto.imagen %></div>
                     </div>
-                    <h3 class="product-name">Vibrador Premium</h3>
-                    <p class="product-description">Diseño ergonómico de alta gama</p>
+                    <h3 class="product-name"><%= producto.nombre %></h3>
+                    <p class="product-description"><%= producto.descripcion %></p>
                     <div class="product-footer">
-                        <span class="product-price">$1,299</span>
-                        <button class="add-to-cart">Agregar</button>
+                        <span class="product-price">$<%= producto.precio.toLocaleString('es-MX') %></span>
+                        <button class="add-to-cart-btn" onclick="addToCart(<%= producto.id %>)" data-id="<%= producto.id %>">Agregar</button> 
                     </div>
                 </div>
-
-                <div class="product-card">
-                    <div class="product-badge">Top 2</div>
-                    <div class="product-image">
-                        <div class="placeholder-img">💜</div>
-                    </div>
-                    <h3 class="product-name">Set Lencería Deluxe</h3>
-                    <p class="product-description">Elegancia y comodidad</p>
-                    <div class="product-footer">
-                        <span class="product-price">$899</span>
-                        <button class="add-to-cart">Agregar</button>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-badge">Top 3</div>
-                    <div class="product-image">
-                        <div class="placeholder-img">🎀</div>
-                    </div>
-                    <h3 class="product-name">Aceite Masaje Sensual</h3>
-                    <p class="product-description">Aromaterapia para parejas</p>
-                    <div class="product-footer">
-                        <span class="product-price">$449</span>
-                        <button class="add-to-cart">Agregar</button>
-                    </div>
-                </div>
-
-                <div class="product-card">
-                    <div class="product-badge">Top 4</div>
-                    <div class="product-image">
-                        <div class="placeholder-img">🔥</div>
-                    </div>
-                    <h3 class="product-name">Kit BDSM Principiantes</h3>
-                    <p class="product-description">Todo para empezar</p>
-                    <div class="product-footer">
-                        <span class="product-price">$1,599</span>
-                        <button class="add-to-cart">Agregar</button>
-                    </div>
-                </div>
+                <% }); %>
             </div>
         </div>
     </section>
 
-    <!-- Métodos de Pago -->
     <section class="payment-methods">
         <div class="container">
             <h2 class="section-title">Tú eliges cómo pagar...</h2>
@@ -180,7 +150,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -210,25 +179,6 @@
         </div>
     </footer>
 
-    <script>
-        // Funcionalidad del carrito
-        let cartCount = 0;
-        const cartCountElement = document.querySelector('.cart-count');
-        const addToCartButtons = document.querySelectorAll('.add-to-cart');
-
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                cartCount++;
-                cartCountElement.textContent = cartCount;
-                button.textContent = '✓ Agregado';
-                button.style.background = '#10b981';
-                
-                setTimeout(() => {
-                    button.textContent = 'Agregar';
-                    button.style.background = '';
-                }, 2000);
-            });
-        });
-    </script>
+    <script src="/js/tienda.js"></script>
 </body>
 </html>
