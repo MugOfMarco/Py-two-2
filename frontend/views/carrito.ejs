@@ -1,64 +1,75 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - π two 2</title> 
-    <link rel="stylesheet" href="/css/carrito.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - π two 2</title> 
+    <link rel="stylesheet" href="/css/carrito.css">
 </head>
 <body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <a href="/"> 
-                        <h1>π two 2</h1>
-                        <span class="tagline">Tu bienestar íntimo</span>
-                    </a>
-                </div>
-                
-                <form action="/" method="GET" class="search-bar"> 
-                    <input type="text" name="q" placeholder="Buscar productos...">
-                    <button type="submit" class="search-btn">
-                        </button>
-                </form>
-                
-                <div class="header-icons">
-                    <a href="/login" class="icon-btn"><span>Cuenta</span></a>
-                    <a href="/carrito" class="icon-btn cart-btn active"> 
-                        <span class="cart-count">0</span>
-                        <span>Carrito</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/"> 
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
+                </div>
+                
+                <form action="/" method="GET" class="search-bar"> 
+                    <input type="text" name="q" placeholder="Buscar productos...">
+                    <button type="submit" class="search-btn">
+                        </button>
+                </form>
+                
+                <div class="header-icons">
+                    <a href="/login" class="icon-btn"><span>Cuenta</span></a>
+                    <a href="/carrito" class="icon-btn cart-btn active"> 
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <nav class="category-nav">
-        <div class="container">
-            <a href="/bdsm" class="nav-link">BDSM</a>
-            <a href="/bienestar" class="nav-link">Bienestar</a>
-            <a href="/juguetes" class="nav-link">Juguetes</a>
-            <a href="/lenceria" class="nav-link">Lencería</a>
-        </div>
-    </nav>
+    <nav class="category-nav">
+        <div class="container">
+            <a href="/bdsm" class="nav-link">BDSM</a>
+            <a href="/bienestar" class="nav-link">Bienestar</a>
+            <a href="/juguetes" class="nav-link">Juguetes</a>
+            <a href="/lenceria" class="nav-link">Lencería</a>
+        </div>
+    </nav>
 
-    <section class="cart-banner">
-        <div class="container">
-            <h1>🛒 Mi Carrito de Compras</h1>
-            <p>Revisa tus productos antes de finalizar tu compra</p>
-        </div>
-    </section>
+    <section class="cart-banner">
+        <div class="container">
+            <h1>🛒 Mi Carrito de Compras</h1>
+            <p>Revisa tus productos antes de finalizar tu compra</p>
+        </div>
+    </section>
 
-    <section class="cart-content">
-        <div class="container">
-            <div class="cart-layout">
-                
-                <div class="cart-items">
+    <section class="cart-content">
+        <div class="container">
+            <div class="cart-layout">
+                
+                <div class="cart-items">
                     
                     <% 
-                        // Corregido: Inicializamos la variable aquí para que tenga un alcance global
-                        let totalSubtotal = 0; 
+                        // Variables EJS solo se usan para el renderizado inicial si el carrito viene con datos
+                        let initialSubtotal = 0; 
+                        let initialTotalItems = 0;
+                        let initialItemsCount = (items && items.length) ? items.length : 0;
+
+                        if (items && items.length > 0) {
+                            items.forEach(function(item) {
+                                const price = parseFloat(item.precio_unitario || item.precio || 0);
+                                const subtotal = price * item.cantidad;
+                                initialSubtotal += subtotal;
+                                initialTotalItems += item.cantidad;
+                            });
+                        }
                     %>
                     
                     <% if (error) { %>
@@ -66,36 +77,36 @@
                             <p>❌ Error al cargar el carrito: <%= error %></p>
                             <a href="/" class="btn-shop">Volver a la Tienda</a>
                         </div>
-                    <% } else if (items && items.length > 0) { %>
+                    <% } %>
 
-                        <div class="cart-header"> 
-                            <h2>Productos en tu carrito (<span id="items-count"><%= items.length %></span>)</h2>
-                            <button class="clear-cart" onclick="clearCart()">Vaciar carrito</button>
-                        </div>
+                    <div class="cart-header" style="display: <%= initialItemsCount > 0 ? 'flex' : 'none' %>;"> 
+                        <h2>Productos en tu carrito (<span id="items-count"><%= initialItemsCount %></span>)</h2>
+                        <button class="clear-cart" onclick="clearCart()">Vaciar carrito</button>
+                    </div>
 
-                        <div class="cart-items-list">
+                    <div class="cart-items-list">
+                        <% if (items && items.length > 0) { %>
                             <% items.forEach(function(item) { 
-                                // El precio que viene de la BD es un string o Number, lo convertimos a flotante
-                                const price = parseFloat(item.precio);
+                                // Usar precio_unitario si está disponible (viene del controlador API)
+                                const price = parseFloat(item.precio_unitario || item.precio); 
                                 const subtotal = price * item.cantidad;
-                                totalSubtotal += subtotal; // Sumamos al total general
                             %>
                                 <div class="cart-item" data-product-id="<%= item.id_producto %>">
                                     <div class="item-image">
                                         <div class="placeholder-img" style="background-color: #f0f0f0; border-radius: 5px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
                                             <%= item.imagen_url ? '' : '✨' %>
                                         </div>
-                                        </div>
+                                    </div>
                                     <div class="item-info">
                                         <h3><%= item.nombre %></h3>
-                                        <p class="description"><%= item.descripcion %></p>
+                                        <p class="description"><%= item.descripcion || 'Sin descripción' %></p>
                                     </div>
                                     
                                     <div class="item-quantity-controls">
                                         <div class="quantity-input">
-                                            <button class="qty-btn minus-btn" data-id="<%= item.id_producto %>">-</button>
+                                            <button class="qty-btn minus-btn" onclick="changeQuantity(<%= item.id_producto %>, <%= item.cantidad - 1 %>)">-</button>
                                             <input type="text" value="<%= item.cantidad %>" min="1" readonly>
-                                            <button class="qty-btn plus-btn" data-id="<%= item.id_producto %>">+</button>
+                                            <button class="qty-btn plus-btn" onclick="changeQuantity(<%= item.id_producto %>, <%= item.cantidad + 1 %>)">+</button>
                                         </div>
                                     </div>
 
@@ -107,75 +118,68 @@
                                         <p class="subtotal-amount">$<%= subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></p>
                                     </div>
                                     
-                                    <button class="remove-item-btn" data-id="<%= item.id_producto %>">
+                                    <button class="remove-item-btn" onclick="removeItem(<%= item.id_producto %>)">
                                         &times;
                                     </button>
                                 </div>
                             <% }); %>
-                        </div>
-                        
-                    <% } else { %>
-                        <div class="empty-cart">
-                            <div class="empty-icon">🛒</div>
-                            <h3>Tu carrito está vacío</h3>
-                            <p>Agrega productos para comenzar tu compra</p>
-                            <a href="/" class="btn-shop">Ir a la tienda</a> 
-                        </div>
-                    <% } %>
+                        <% } %>
+                    </div>
                     
-                </div>
+                    <div class="empty-cart" style="display: <%= initialItemsCount === 0 ? 'block' : 'none' %>;">
+                        <div class="empty-icon">🛒</div>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega productos para comenzar tu compra</p>
+                        <a href="/" class="btn-shop">Ir a la tienda</a> 
+                    </div>
+                    
+                </div>
 
-                <div class="cart-summary">
-                    <h2>Resumen de compra</h2>
+                <div class="cart-summary">
+                    <h2>Resumen de compra</h2>
 
                     <% 
-                        // Calcular totales. totalSubtotal ya está definido y sumado en el loop.
-                        let ivaAmount = 0;
-                        let totalFinal = 0;
                         const ivaRate = 0.16;
-                        
-                        if (totalSubtotal > 0) { 
-                            ivaAmount = totalSubtotal * ivaRate;
-                            totalFinal = totalSubtotal + ivaAmount;
-                        }
+                        let initialIvaAmount = initialSubtotal * ivaRate;
+                        let initialTotalFinal = initialSubtotal + initialIvaAmount;
                     %>
-                    
-                    <div class="summary-item">
-                        <span>Subtotal</span>
-                        <span id="subtotal">$<%= totalSubtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <span>Envío</span>
-                        <span class="shipping-free">GRATIS</span>
-                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span id="subtotal">$<%= initialSubtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Envío</span>
+                        <span class="shipping-free">GRATIS</span>
+                    </div>
 
-                    <div class="summary-item">
-                        <span>IVA (16%)</span>
-                        <span id="iva">$<%= ivaAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span> 
-                    </div>
-                    
-                    <div class="summary-divider"></div>
-                    
-                    <div class="summary-total">
-                        <span>Total Final</span>
-                        <span id="total-amount">$<%= totalFinal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span> 
-                    </div>
+                    <div class="summary-item">
+                        <span>IVA (16%)</span>
+                        <span id="iva">$<%= initialIvaAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span> 
+                    </div>
+                    
+                    <div class="summary-divider"></div>
+                    
+                    <div class="summary-total">
+                        <span>Total Final</span>
+                        <span id="total-amount">$<%= initialTotalFinal.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></span> 
+                    </div>
 
-                    <button class="btn-checkout" onclick="checkout()" <%= (items && items.length > 0) ? '' : 'disabled' %>>
-                        Proceder al pago
-                    </button>
+                    <button class="btn-checkout" onclick="checkout()" <%= initialItemsCount > 0 ? '' : 'disabled' %>>
+                        Proceder al pago
+                    </button>
 
-                    <div class="security-badges">
-                                            </div>
+                    <div class="security-badges">
+                        </div>
 
-                    <a href="/" class="continue-shopping">← Seguir comprando</a> 
-                </div>
+                    <a href="/" class="continue-shopping">← Seguir comprando</a> 
+                </div>
 
-            </div>
-        </div>
-    </section>
+            </div>
+        </div>
+    </section>
 
-    <script src="/js/carrito.js"></script>
+    <script src="/js/carrito.js"></script> 
 </body>
 </html>

@@ -1,36 +1,28 @@
-// backend/routers/carritoroutes.js
+// backend/routers/carritoroutes.js (Versión COMPLETA y FINAL)
 
-import { Router } from 'express';
-// Importamos todas las funciones del controlador del carrito
+import express from 'express';
 import { 
-    getCart, 
-    getCartItemCount,
-    addOrUpdateCartItem, 
-    removeItemFromCart,
-    clearUserCart 
-} from '../controllers/carritocontroller.js'; 
+    addOrUpdateCartItem, 
+    getCartAPI,          
+    removeItem,          
+    clearCart,           
+} from '../controllers/carritocontroller.js';
 
-const router = Router();
+const router = express.Router();
 
-// =======================================================
-// RUTAS DE LA API PARA EL CARRITO (/api/carrito)
-// =======================================================
+// 1. POST /api/carrito - RUTA PARA EL CHANGE QUANTITY DEL CARRITO.JS
+router.post('/', addOrUpdateCartItem);
 
-// 1. OBTENER CARRITO COMPLETO Y CONTEO DE ÍTEMS
-router.get('/usuario/:userId', getCart);
-
-// 2. OBTENER SOLO EL CONTEO DE ÍTEMS (Usado por el header en tienda.js)
-router.get('/count/usuario/:userId', getCartItemCount);
-
-// 3. AÑADIR O ACTUALIZAR ÍTEM (POST)
-// COINCIDE CON LA LLAMADA DEL FRONTEND: /api/carrito/add
+// 1.b POST /api/carrito/add - ¡RUTA AÑADIDA PARA TIENDA.JS!
 router.post('/add', addOrUpdateCartItem); 
 
-// 4. ELIMINAR ÍTEM ESPECÍFICO
-router.delete('/item/:productId', removeItemFromCart);
+// 2. GET /api/carrito/usuario/:userId - Obtener todos los ítems para renderizar
+router.get('/usuario/:userId', getCartAPI); 
 
-// 5. VACIAR CARRITO COMPLETO
-router.delete('/usuario/:userId', clearUserCart);
+// 3. DELETE /api/carrito/item/:productId - Eliminar un solo ítem
+router.delete('/item/:productId', removeItem); 
 
+// 4. DELETE /api/carrito/usuario/:userId - Vaciar todo el carrito
+router.delete('/usuario/:userId', clearCart); 
 
 export default router;

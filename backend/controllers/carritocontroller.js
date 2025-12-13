@@ -1,113 +1,110 @@
 // backend/controllers/carritocontroller.js
 
-// Importamos tu conexión a la base de datos ya existente
 import { pool } from '../config/bdconfig.js'; 
 
 // =======================================================
-// LÓGICA PRINCIPAL: addOrUpdateCartItem (USA SQL REAL)
+// HELPER: Obtener ID del Carrito (Función interna)
 // =======================================================
 
-/**
- * 1. Garantiza que el carrito principal (tabla carritos) exista para el usuario.
- * 2. Inserta o actualiza el ítem de producto en la tabla items_carrito.
- */
-export const addOrUpdateCartItem = async (req, res) => {
-    // NOTA: Usamos el ID de usuario '1' de forma fija hasta implementar el sistema de login/sesión.
-    const userId = 1; 
-    const { productId, quantity = 1 } = req.body;
-    
-    if (!productId) {
-        return res.status(400).json({ success: false, message: 'Falta el ID del producto.' });
-    }
-    
+const getCartId = async (userId) => {
     try {
-        // --- 1. Garantizar que el Carrito (tabla carritos) exista ---
-        let cartId;
-        
-        // Buscar el carrito existente del usuario
-        const [existingCart] = await pool.query(
+        const [cart] = await pool.query(
             'SELECT id_carrito FROM carritos WHERE id_usuario = ?',
             [userId]
         );
+        return cart.length > 0 ? cart[0].id_carrito : null;
+    } catch (error) {
+        console.error('Error al obtener el ID del carrito:', error);
+        throw error;
+    }
+};
 
-        if (existingCart.length > 0) {
-            cartId = existingCart[0].id_carrito;
-            console.log(`[BACKEND - CARRITO]: Carrito principal encontrado (ID: ${cartId}).`);
-        } else {
-            // Si no existe, crear un nuevo carrito para el usuario
+// =======================================================
+// LÓGICA: addOrUpdateCartItem (POST /api/carrito)
+// Recibe la CANTIDAD FINAL deseada (quantity)
+// =======================================================
+
+export const addOrUpdateCartItem = async (req, res) => {
+    // Tu JS envía userId, productId y quantity (cantidad FINAL)
+    let { userId, productId, quantity } = req.body; 
+    
+if (!userId || isNaN(parseInt(userId))) {
+        userId = 1; // Usamos el ID por defecto que estamos simulando
+        console.warn(`[CARRITO] WARNING: userId era nulo/inválido. Forzando a userId: ${userId}`);
+    }
+
+    // Validación básica
+    if (!productId || typeof quantity !== 'number' || quantity < 0) {
+        return res.status(400).json({ success: false, message: 'Datos de producto o cantidad inválidos.' });
+    }
+    
+    try {
+        console.log(`[CARRITO] Actualizando P:${productId} a Q:${quantity} para U:${userId}`);
+
+        let cartId = await getCartId(userId);
+
+        // Si el carrito no existe, lo creamos
+        if (!cartId) {
             const [result] = await pool.query(
                 'INSERT INTO carritos (id_usuario) VALUES (?)',
                 [userId]
             );
             cartId = result.insertId;
-            console.log(`[BACKEND - CARRITO]: Nuevo carrito principal creado (ID: ${cartId}).`);
         }
 
-        // --- 2. Insertar o Actualizar el Ítem en items_carrito ---
-        
-        // Buscar el ítem dentro de items_carrito
+        // Si la cantidad es 0, eliminamos el ítem (lógica de removeItem)
+        if (quantity === 0) {
+            await pool.query(
+                `DELETE FROM items_carrito WHERE id_carrito = ? AND id_producto = ?`,
+                [cartId, productId]
+            );
+            return res.json({ success: true, message: `Producto ${productId} eliminado.` });
+        }
+
+        // Buscar si el ítem ya existe en items_carrito
         const [existingItem] = await pool.query(
-            'SELECT id_item, cantidad FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
+            'SELECT id_item FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
             [cartId, productId]
         );
-
-        let query;
-        let params;
+        
         let message;
         
-        // NOTA: El precio_unitario se puede ignorar en esta etapa si se consulta de la tabla 'productos'.
-        // Aquí asumimos que aún no tienes la tabla 'productos' poblada, así que no se usa el precio.
-
         if (existingItem.length > 0) {
-            // Si el ítem existe, actualizar la cantidad
-            const newQuantity = existingItem[0].cantidad + quantity;
-            
-            query = 'UPDATE items_carrito SET cantidad = ? WHERE id_item = ?';
-            params = [newQuantity, existingItem[0].id_item];
-            message = `Cantidad del producto ${productId} actualizada en el carrito ${cartId}.`;
+            // Si existe, actualizar a la nueva cantidad (quantity)
+            await pool.query(
+                'UPDATE items_carrito SET cantidad = ? WHERE id_item = ?',
+                [quantity, existingItem[0].id_item]
+            );
+            message = `Cantidad del producto ${productId} actualizada a ${quantity}.`;
             
         } else {
-            // Si no existe, insertar el nuevo ítem
-            query = 'INSERT INTO items_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)';
-            // El precio unitario debe ser consultado de la tabla productos. Usamos 0 como placeholder.
-            params = [cartId, productId, quantity, 0.00]; 
-            message = `Producto ${productId} insertado en el carrito ${cartId}.`;
+            // Si no existe, insertar el nuevo ítem.
+            // NOTA: Se usa 0.00 como precio unitario para cumplir el INSERT, pero el GET lo obtendrá de la tabla de productos.
+            await pool.query(
+                'INSERT INTO items_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                [cartId, productId, quantity, 0.00] 
+            );
+            message = `Producto ${productId} insertado con cantidad ${quantity}.`;
         }
 
-        await pool.query(query, params);
-
-        console.log(`✅ [BACKEND - CARRITO]: ${message}`);
-        
-        // Respuesta de éxito (JSON) al frontend
+        console.log(`✅ [CARRITO]: ${message}`);
         res.json({ success: true, message: message }); 
 
     } catch (error) {
-        console.error('❌ [BACKEND - CARRITO]: Error SQL al guardar en el carrito:', error);
-        res.status(500).json({ success: false, message: 'Error interno del servidor al guardar en el carrito.', error: error.message });
+        console.error('❌ [CARRITO]: Error al actualizar/guardar:', error);
+        res.status(500).json({ success: false, message: 'Error interno del servidor al actualizar el carrito.', error: error.message });
     }
 };
 
-// =======================================================
-// Otras funciones (MOCKS temporales - Pendientes de conectar a SQL)
-// =======================================================
-
-// Estas funciones aún son MOCKs y solo devuelven datos fijos:
-// backend/controllers/carritocontroller.js (Fragmento)
-
-// ... (asegúrate de que el resto del código, incluido addOrUpdateCartItem, se mantenga)
 
 // =======================================================
-// LÓGICA PRINCIPAL: getCart (AHORA USA SQL REAL)
+// LÓGICA: getCartAPI (GET /api/carrito/usuario/:userId)
 // =======================================================
-export const getCart = async (req, res) => {
-    // NOTA: Usamos el ID de usuario '1' de forma fija hasta implementar el sistema de login/sesión.
-    const userId = 1; 
+
+export const getCartAPI = async (req, res) => {
+    const userId = req.params.userId; 
 
     try {
-        console.log(`[BACKEND - CARRITO]: Ejecutando SQL para obtener carrito del Usuario ID: ${userId}`);
-
-        // Consulta SQL para obtener todos los ítems del carrito.
-        // Unimos (JOIN) las tres tablas: carritos, items_carrito y productos.
         const query = `
             SELECT
                 ic.id_item,
@@ -115,7 +112,7 @@ export const getCart = async (req, res) => {
                 p.id_producto,
                 p.nombre,
                 p.descripcion,
-                p.precio,
+                p.precio AS precio_unitario,
                 p.imagen_url
             FROM carritos AS c
             JOIN items_carrito AS ic ON c.id_carrito = ic.id_carrito
@@ -125,25 +122,112 @@ export const getCart = async (req, res) => {
 
         const [items] = await pool.query(query, [userId]);
         
-        console.log(`✅ [BACKEND - CARRITO]: ${items.length} ítems encontrados en el carrito.`);
+        // Suma de la cantidad total de unidades
+        const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
+
+        if (items.length === 0) {
+             return res.json({ success: true, data: [], totalItems: 0, message: "Carrito vacío." });
+        }
         
-        // Esta función devolverá el array de ítems (lo usaremos en server.js, no en una API directa)
-        return items; 
+        console.log(`✅ [CARRITO API]: ${items.length} ítems únicos encontrados.`);
+
+        return res.json({ 
+            success: true, 
+            data: items,
+            totalItems: totalItems,
+            message: "Carrito cargado exitosamente."
+        }); 
 
     } catch (error) {
-        console.error('❌ [BACKEND - CARRITO]: Error SQL al obtener el carrito:', error);
-        // Lanzamos el error para que sea capturado por el middleware de ruta en server.js
-        throw new Error('Error al cargar los datos del carrito desde la BD.'); 
+        console.error('❌ [CARRITO API]: Error SQL al obtener el carrito:', error);
+        return res.status(500).json({ success: false, message: 'Error al cargar los datos del carrito desde la BD.' });
     }
 };
 
-// ... (El resto del controlador debe permanecer igual: addOrUpdateCartItem, etc.)
 
-export const getCartItemCount = async (req, res) => {
-    const { userId } = req.params;
-    console.log(`[BACKEND - CARRITO] MOCK: Obteniendo conteo para el usuario ${userId}`);
-    res.json({ success: true, count: 0 }); 
+// =======================================================
+// LÓGICA: removeItem (DELETE /api/carrito/item/:productId)
+// =======================================================
+
+export const removeItem = async (req, res) => {
+    // Tomamos el userId del query string, como lo envía el frontend
+    const userId = req.query.userId || 1; 
+    const { productId } = req.params; 
+
+    try {
+        const cartId = await getCartId(userId);
+
+        if (!cartId) {
+            return res.status(404).json({ success: false, message: "No se encontró el carrito." });
+        }
+
+        const [result] = await pool.query(
+            `DELETE FROM items_carrito WHERE id_carrito = ? AND id_producto = ?`,
+            [cartId, productId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "El producto no se encontró en el carrito." });
+        }
+        
+        return res.json({ success: true, message: "Producto eliminado del carrito." });
+
+    } catch (error) {
+        console.error('❌ [CARRITO]: Error SQL al eliminar ítem:', error);
+        return res.status(500).json({ success: false, message: "Error interno del servidor al eliminar el producto." });
+    }
 };
 
-export const removeItemFromCart = (req, res) => { res.json({ success: true, message: 'Ítem eliminado (MOCK).' }); };
-export const clearUserCart = (req, res) => { res.json({ success: true, message: 'Carrito vaciado (MOCK).' }); };
+
+// =======================================================
+// LÓGICA: clearCart (DELETE /api/carrito/usuario/:userId)
+// =======================================================
+
+export const clearCart = async (req, res) => {
+    const userId = req.params.userId; 
+
+    try {
+        const cartId = await getCartId(userId);
+
+        if (!cartId) {
+            return res.status(200).json({ success: true, message: "El carrito ya está vacío o no existe." });
+        }
+
+        const [result] = await pool.query(
+            `DELETE FROM items_carrito WHERE id_carrito = ?`,
+            [cartId]
+        );
+
+        return res.json({ success: true, message: `Carrito vaciado completamente. ${result.affectedRows} ítems eliminados.` });
+
+    } catch (error) {
+        console.error('❌ [CARRITO]: Error SQL al vaciar carrito:', error);
+        return res.status(500).json({ success: false, message: "Error interno del servidor al vaciar el carrito." });
+    }
+};
+
+// Función auxiliar para EJS (si la usas)
+export const getCart = async (req, res) => {
+    const userId = 1; 
+    try {
+        const query = `
+            SELECT
+                ic.id_item,
+                ic.cantidad,
+                p.id_producto,
+                p.nombre,
+                p.descripcion,
+                p.precio AS precio_unitario,
+                p.imagen_url
+            FROM carritos AS c
+            JOIN items_carrito AS ic ON c.id_carrito = ic.id_carrito
+            JOIN productos AS p ON ic.id_producto = p.id_producto
+            WHERE c.id_usuario = ?
+        `;
+
+        const [items] = await pool.query(query, [userId]);
+        return items; 
+    } catch (error) {
+        throw new Error('Error al cargar los datos del carrito desde la BD.'); 
+    }
+};

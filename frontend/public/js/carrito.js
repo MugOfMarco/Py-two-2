@@ -14,7 +14,7 @@ const IVA_RATE = 0.16; // 16% de IVA
 /**
  * Muestra el carrito vacío o la lista de ítems.
  * @param {Array<object>} items - Lista de ítems del carrito desde la BD.
- * @param {number} totalItems - Cantidad total de productos únicos.
+ * @param {number} totalItems - Cantidad total de productos (suma de cantidades).
  */
 function renderCart(items, totalItems) {
     // Referencias a los contenedores principales
@@ -27,9 +27,11 @@ function renderCart(items, totalItems) {
     const subtotalElement = document.getElementById('subtotal');
     const ivaElement = document.getElementById('iva');
     const totalAmountElement = document.getElementById('total-amount'); // Total final
+    const cartSummaryContainer = document.querySelector('.cart-summary'); // Contenedor del resumen
+    const checkoutButton = document.querySelector('.btn-checkout'); // Botón de pagar (si existe)
 
-    if (!cartItemsContainer || !emptyCartElement || !itemsCountElement || !cartHeader || !totalAmountElement || !subtotalElement || !ivaElement) {
-        console.error('No se encontraron todos los elementos DOM necesarios para renderizar el carrito.');
+    if (!cartItemsContainer || !emptyCartElement || !itemsCountElement || !cartHeader || !totalAmountElement || !subtotalElement || !ivaElement || !cartSummaryContainer) {
+        console.error('No se encontraron todos los elementos DOM necesarios para renderizar el carrito. Revise su carrito.ejs.');
         return;
     }
 
@@ -37,6 +39,7 @@ function renderCart(items, totalItems) {
     if (items.length === 0) {
         emptyCartElement.style.display = 'block';
         cartHeader.style.display = 'none';
+        cartSummaryContainer.style.display = 'none'; // Ocultar el resumen al vaciarse
         cartItemsContainer.innerHTML = ''; // Limpiar lista
         
         // Resetear totales
@@ -44,20 +47,24 @@ function renderCart(items, totalItems) {
         subtotalElement.textContent = '$0.00';
         ivaElement.textContent = '$0.00';
         totalAmountElement.textContent = '$0.00';
+        if (checkoutButton) checkoutButton.disabled = true;
         return;
     }
 
+    // Si hay ítems:
     emptyCartElement.style.display = 'none';
-    cartHeader.style.display = 'flex';
+    cartHeader.style.display = 'flex'; // O 'block' según tu CSS original
+    cartSummaryContainer.style.display = 'block'; // Mostrar el resumen
     cartItemsContainer.innerHTML = ''; // Limpiar antes de renderizar
+    if (checkoutButton) checkoutButton.disabled = false;
 
     let subTotal = 0;
 
     // 2. Renderizar cada ítem
     items.forEach(item => {
-        // ✅ CORRECCIÓN: Convertir el precio unitario a un número flotante, ya que MySQL lo devuelve como string.
+        // Obtenemos el precio unitario del alias que dimos en el controller
         const unitPrice = parseFloat(item.precio_unitario); 
-
+        
         const itemTotal = item.cantidad * unitPrice; 
         subTotal += itemTotal; 
 
@@ -65,8 +72,6 @@ function renderCart(items, totalItems) {
         itemElement.className = 'cart-item';
         itemElement.setAttribute('data-product-id', item.id_producto); 
         
-        // Formatear precio
-        // ✅ CORRECCIÓN: Llamar toFixed() sobre el valor numérico (unitPrice)
         const formattedPrice = unitPrice.toFixed(2); 
         const formattedTotal = itemTotal.toFixed(2);
         
@@ -75,16 +80,16 @@ function renderCart(items, totalItems) {
                 <img src="${item.imagen_url || '/img/default_product.jpg'}" alt="${item.nombre}">
                 <div class="info">
                     <h4 class="product-name">${item.nombre}</h4>
-                    <p class="product-category">${item.categoria || 'Sin Categoría'}</p>
+                    <p class="product-category">${item.descripcion || 'Sin Descripción'}</p> 
                     <p class="unit-price">Precio: <span class="price">$${formattedPrice}</span></p>
                 </div>
             </div>
 
             <div class="item-controls">
                 <div class="quantity-input">
-                    <button onclick="changeQuantity(${item.id_producto}, -1)">-</button>
+                    <button onclick="changeQuantity(${item.id_producto}, ${item.cantidad - 1})">-</button>
                     <input type="number" value="${item.cantidad}" min="1" readonly>
-                    <button onclick="changeQuantity(${item.id_producto}, 1)">+</button>
+                    <button onclick="changeQuantity(${item.id_producto}, ${item.cantidad + 1})">+</button>
                 </div>
                 <div class="item-total">$${formattedTotal}</div>
                 <button class="remove-item-btn" onclick="removeItem(${item.id_producto})">
@@ -97,9 +102,9 @@ function renderCart(items, totalItems) {
 
     // 3. Calcular y Actualizar resumen y contador
     const ivaAmount = subTotal * IVA_RATE;
-    const grandTotal = subTotal + ivaAmount; // Asumiendo que el envío es GRATIS
+    const grandTotal = subTotal + ivaAmount; 
 
-    itemsCountElement.textContent = totalItems;
+    itemsCountElement.textContent = items.length; // Cantidad de productos ÚNICOS
     subtotalElement.textContent = `$${subTotal.toFixed(2)}`;
     ivaElement.textContent = `$${ivaAmount.toFixed(2)}`;
     totalAmountElement.textContent = `$${grandTotal.toFixed(2)}`;
@@ -107,7 +112,7 @@ function renderCart(items, totalItems) {
     // Actualizar el contador del header (si existe un .cart-count global)
     const cartCountElement = document.querySelector('.cart-count');
     if (cartCountElement) {
-        cartCountElement.textContent = totalItems;
+        cartCountElement.textContent = totalItems; // Total de unidades
     }
 }
 
@@ -118,6 +123,7 @@ function renderCart(items, totalItems) {
  */
 async function loadCart() {
     try {
+        // GET /api/carrito/usuario/:userId
         const response = await fetch(`${API_BASE_URL}/usuario/${USER_ID}`);
         
         if (response.status === 404) {
@@ -127,21 +133,22 @@ async function loadCart() {
         }
 
         if (!response.ok) {
-            throw new Error('Error al cargar el carrito.');
+            const errorData = await response.json().catch(() => ({ message: 'Error desconocido.' }));
+            throw new Error(errorData.message || 'Error al cargar el carrito.');
         }
 
         const result = await response.json();
         
         if (result.success) {
+            // result.data es el array de ítems, result.totalItems es la suma de cantidades
             renderCart(result.data, result.totalItems);
         } else {
-            // Manejar error de carga, renderizar carrito vacío
             renderCart([], 0); 
             console.error(result.message);
         }
 
     } catch (error) {
-        console.error('Error de conexión al cargar el carrito:', error);
+        console.error('Error de conexión o de servidor al cargar el carrito:', error);
         // En caso de error de red, renderizar carrito vacío
         renderCart([], 0); 
     }
@@ -152,19 +159,14 @@ window.loadCart = loadCart;
 /**
  * Actualiza la cantidad de un producto.
  * @param {number} productId - ID del producto a modificar.
- * @param {number} delta - Cambio en la cantidad (+1 o -1).
+ * @param {number} newQuantity - La nueva cantidad TOTAL deseada (ej: 5).
  */
-window.changeQuantity = async function(productId, delta) {
-    const itemElement = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
-    const input = itemElement ? itemElement.querySelector('input[type="number"]') : null;
-
-    if (!input) return;
-
-    let currentQuantity = parseInt(input.value);
-    let newQuantity = currentQuantity + delta;
+window.changeQuantity = async function(productId, newQuantity) {
 
     if (newQuantity < 1) {
+        // Si se intenta bajar a 0 o menos, confirmamos la eliminación
         if (confirm('¿Desea eliminar este producto del carrito?')) {
+            // Usamos removeItem, que ya usa la ruta DELETE correcta.
             removeItem(productId);
         }
         return; 
@@ -178,18 +180,17 @@ window.changeQuantity = async function(productId, delta) {
             body: JSON.stringify({ 
                 userId: USER_ID, 
                 productId: productId, 
-                quantity: newQuantity 
+                quantity: newQuantity // Enviamos la cantidad TOTAL deseada
             }),
         });
 
         const result = await response.json();
 
         if (response.ok && result.success) {
-            loadCart(); // Recargar el carrito para mostrar los nuevos totales
+            loadCart(); // <--- RECARGA LA VISTA
         } else {
             alert(`Error al actualizar la cantidad: ${result.message}`);
-            // Recargar para restaurar la cantidad correcta si hay un error (ej: stock)
-            loadCart();
+            loadCart(); // Recargar para restaurar la cantidad correcta si hay un error (ej: stock)
         }
 
     } catch (error) {
@@ -209,7 +210,7 @@ window.removeItem = async function(productId) {
     }
     
     try {
-        // Se asume que el backend usa el USER_ID codificado para la sesión
+        // DELETE /api/carrito/item/:productId?userId=1
         const response = await fetch(`${API_BASE_URL}/item/${productId}?userId=${USER_ID}`, {
             method: 'DELETE',
         });
@@ -218,7 +219,7 @@ window.removeItem = async function(productId) {
 
         if (response.ok && result.success) {
             alert('Producto eliminado correctamente.');
-            loadCart(); // Recargar el carrito
+            loadCart(); // <--- RECARGA LA VISTA
         } else {
             alert(`Error al eliminar el producto: ${result.message}`);
         }
@@ -238,6 +239,7 @@ window.clearCart = async function() {
     }
 
     try {
+        // DELETE /api/carrito/usuario/:userId
         const response = await fetch(`${API_BASE_URL}/usuario/${USER_ID}`, {
             method: 'DELETE',
         });
@@ -246,7 +248,7 @@ window.clearCart = async function() {
 
         if (response.ok && result.success) {
             alert(result.message);
-            loadCart(); // Recargar para mostrar el carrito vacío
+            loadCart(); // <--- RECARGA LA VISTA
         } else {
             alert(`Error al vaciar el carrito: ${result.message}`);
         }
