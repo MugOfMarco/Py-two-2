@@ -1,184 +1,184 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - π two 2 - Sex Shop Premium</title>
-    <link rel="stylesheet" href="/css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - π two 2 - Sex Shop Premium</title>
+    <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <a href="/">
-                        <h1>π two 2</h1>
-                        <span class="tagline">Tu bienestar íntimo</span>
-                    </a>
-                </div>
-                
-                <form action="/" method="GET" class="search-bar">
-                    <input type="text" name="q" placeholder="Buscar productos..." value="<%= searchQuery || '' %>" required>
-                    <button type="submit" class="search-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
-                </form>
-                
-                <div class="header-icons">
-                    <a href="/login" class="icon-btn">
-                        <span>Cuenta</span>
-                    </a>
-                    <a href="/carrito" class="icon-btn cart-btn">
-                        <span class="cart-count">0</span>
-                        <span>Carrito</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/">
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
+                </div>
+                
+                <form action="/" method="GET" class="search-bar">
+                    <input type="text" name="q" placeholder="Buscar productos..." value="<%= searchQuery || '' %>" required>
+                    <button type="submit" class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </form>
+                
+                <div class="header-icons">
+                    <a href="/login" class="icon-btn">
+                        <span>Cuenta</span>
+                    </a>
+                    <a href="/carrito" class="icon-btn cart-btn">
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <% if (!searchQuery) { %>
-    <section class="categories">
-        <div class="container">
-            <div class="category-grid">
-                <a href="/bdsm" class="category-card bdsm">
-                    <div class="category-icon">🔗</div>
-                    <h3>BDSM</h3>
-                    <p>Explora tu lado atrevido</p>
-                </a>
-                <a href="/bienestar" class="category-card bienestar">
-                    <div class="category-icon">💆‍♀️</div>
-                    <h3>Bienestar</h3>
-                    <p>Cuida de ti</p>
-                </a>
-                <a href="/juguetes" class="category-card juguetes">
-                    <div class="category-icon">✨</div>
-                    <h3>Juguetes</h3>
-                    <p>Diversión garantizada</p>
-                </a>
-                <a href="/lenceria" class="category-card lenceria">
-                    <div class="category-icon">👗</div>
-                    <h3>Lencería</h3>
-                    <p>Siéntete sensual</p>
-                </a>
-            </div>
-        </div>
-    </section>
-    <% } %>
+    <% if (!searchQuery) { %>
+    <section class="categories">
+        <div class="container">
+            <div class="category-grid">
+                <a href="/bdsm" class="category-card bdsm">
+                    <div class="category-icon">🔗</div>
+                    <h3>BDSM</h3>
+                    <p>Explora tu lado atrevido</p>
+                </a>
+                <a href="/bienestar" class="category-card bienestar">
+                    <div class="category-icon">💆‍♀️</div>
+                    <h3>Bienestar</h3>
+                    <p>Cuida de ti</p>
+                </a>
+                <a href="/juguetes" class="category-card juguetes">
+                    <div class="category-icon">✨</div>
+                    <h3>Juguetes</h3>
+                    <p>Diversión garantizada</p>
+                </a>
+                <a href="/lenceria" class="category-card lenceria">
+                    <div class="category-icon">👗</div>
+                    <h3>Lencería</h3>
+                    <p>Siéntete sensual</p>
+                </a>
+            </div>
+        </div>
+    </section>
+    <% } %>
 
-    <section class="top-sales">
-        <div class="container">
-            <h2 class="section-title">
-                <% if (searchQuery) { %>
-                    Resultados de Búsqueda para "<%= searchQuery %>"
-                <% } else { %>
-                    Nuestro Top de Ventas
-                <% } %>
-            </h2>
+    <section class="top-sales">
+        <div class="container">
+            <h2 class="section-title">
+                <% if (searchQuery) { %>
+                    Resultados de Búsqueda para "<%= searchQuery %>"
+                <% } else { %>
+                    Nuestro Top de Ventas
+                <% } %>
+            </h2>
 
-            <% if (message) { %>
-                <div class="alert-message" style="padding: 15px; background-color: #ffe0e0; border: 1px solid #ff4d4d; color: #ff4d4d; margin-bottom: 20px;">
-                    <p><%= message %></p>
-                </div>
-            <% } %>
+            <% if (message) { %>
+                <div class="alert-message" style="padding: 15px; background-color: #ffe0e0; border: 1px solid #ff4d4d; color: #ff4d4d; margin-bottom: 20px;">
+                    <p><%= message %></p>
+                </div>
+            <% } %>
 
-            <div class="products-grid">
-                
-                <% productos.forEach(function(producto) { %>
-                <div class="product-card">
-                    <% if (producto.badge) { %>
-                        <div class="product-badge"><%= producto.badge %></div>
-                    <% } %>
-                    <div class="product-image">
-                        <div class="placeholder-img"><%= producto.imagen %></div>
-                    </div>
-                    <h3 class="product-name"><%= producto.nombre %></h3>
-                    <p class="product-description"><%= producto.descripcion %></p>
-                    <div class="product-footer">
-                        <span class="product-price">$<%= producto.precio.toLocaleString('es-MX') %></span>
-                        <button class="add-to-cart-btn" onclick="addToCart(<%= producto.id %>)" data-id="<%= producto.id %>">Agregar</button> 
-                    </div>
-                </div>
-                <% }); %>
-            </div>
-        </div>
-    </section>
+            <div class="products-grid">
+                
+                <% productos.forEach(function(producto) { %>
+                <div class="product-card">
+                    <% if (producto.badge) { %>
+                        <div class="product-badge"><%= producto.badge %></div>
+                    <% } %>
+                    <div class="product-image">
+                        <div class="placeholder-img"><%= producto.imagen %></div>
+                    </div>
+                    <h3 class="product-name"><%= producto.nombre %></h3>
+                    <p class="product-description"><%= producto.descripcion %></p>
+                    <div class="product-footer">
+                        <span class="product-price">$<%= producto.precio.toLocaleString('es-MX') %></span>
+                                                <button class="add-to-cart-btn" onclick="addToCart('<%= producto.id %>')" data-id="<%= producto.id %>">Agregar</button> 
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </section>
 
-    <section class="payment-methods">
-        <div class="container">
-            <h2 class="section-title">Tú eliges cómo pagar...</h2>
-            <div class="payment-grid">
-                <div class="payment-card">
-                    <div class="payment-logo">
-                        <img src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="PayPal">
-                    </div>
-                    <h3>3 meses</h3>
-                    <p class="highlight">sin intereses</p>
-                    <p class="terms">Compra mín $1299<br>Consulta TyC</p>
-                </div>
+    <section class="payment-methods">
+        <div class="container">
+            <h2 class="section-title">Tú eliges cómo pagar...</h2>
+            <div class="payment-grid">
+                <div class="payment-card">
+                    <div class="payment-logo">
+                        <img src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" alt="PayPal">
+                    </div>
+                    <h3>3 meses</h3>
+                    <p class="highlight">sin intereses</p>
+                    <p class="terms">Compra mín $1299<br>Consulta TyC</p>
+                </div>
 
-                <div class="payment-card">
-                    <div class="payment-logo">
-                        <img src="https://http2.mlstatic.com/storage/logos-api-admin/aa2b8ed0-5c08-11ec-ae75-df2bef173be2-m.svg" alt="Mercado Pago">
-                    </div>
-                    <h3>3 meses</h3>
-                    <p class="highlight">sin intereses</p>
-                    <p class="terms">Compra mín $1299<br>Consulta TyC</p>
-                </div>
+                <div class="payment-card">
+                    <div class="payment-logo">
+                        <img src="https://http2.mlstatic.com/storage/logos-api-admin/aa2b8ed0-5c08-11ec-ae75-df2bef173be2-m.svg" alt="Mercado Pago">
+                    </div>
+                    <h3>3 meses</h3>
+                    <p class="highlight">sin intereses</p>
+                    <p class="terms">Compra mín $1299<br>Consulta TyC</p>
+                </div>
 
-                <div class="payment-card">
-                    <div class="payment-logo">
-                        <span class="icon-payment">🛒</span>
-                    </div>
-                    <h3>2 quincenas</h3>
-                    <p class="highlight">sin intereses</p>
-                    <p class="terms">Consulta términos<br>y condiciones</p>
-                </div>
+                <div class="payment-card">
+                    <div class="payment-logo">
+                        <span class="icon-payment">🛒</span>
+                    </div>
+                    <h3>2 quincenas</h3>
+                    <p class="highlight">sin intereses</p>
+                    <p class="terms">Consulta términos<br>y condiciones</p>
+                </div>
 
-                <div class="payment-card">
-                    <div class="payment-logo oxxo">
-                        <span>OXXO PAY</span>
-                    </div>
-                    <h3>Efectivo</h3>
-                    <p class="highlight">Con Oxxo pay</p>
-                    <p class="terms">Consulta términos<br>y condiciones</p>
-                </div>
-            </div>
-        </div>
-    </section>
+                <div class="payment-card">
+                    <div class="payment-logo oxxo">
+                        <span>OXXO PAY</span>
+                    </div>
+                    <h3>Efectivo</h3>
+                    <p class="highlight">Con Oxxo pay</p>
+                    <p class="terms">Consulta términos<br>y condiciones</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>π two 2</h3>
-                    <p>Tu tienda de confianza para el bienestar íntimo</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Ayuda</h4>
-                    <ul>
-                        <li><a href="#">Preguntas frecuentes</a></li>
-                        <li><a href="#">Envíos</a></li>
-                        <li><a href="#">Devoluciones</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#">Términos y condiciones</a></li>
-                        <li><a href="#">Política de privacidad</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 π two 2. Todos los derechos reservados.</p>
-            </div>
-        </div>
-    </footer>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>π two 2</h3>
+                    <p>Tu tienda de confianza para el bienestar íntimo</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Ayuda</h4>
+                    <ul>
+                        <li><a href="#">Preguntas frecuentes</a></li>
+                        <li><a href="#">Envíos</a></li>
+                        <li><a href="#">Devoluciones</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Términos y condiciones</a></li>
+                        <li><a href="#">Política de privacidad</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 π two 2. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 
-    <script src="/js/tienda.js"></script>
+        <script src="/js/tienda.js"></script>
 </body>
 </html>

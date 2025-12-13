@@ -1,371 +1,188 @@
+// backend/server.js
+
+// 1. IMPORTS NECESARIOS
 import express from 'express';
-import mysql from 'mysql2';
-import session from 'express-session';
-import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// Importamos la función getCart para usarla directamente en la ruta de vista
+import { getCart } from './controllers/carritocontroller.js';
+import { testConnection } from './config/bdconfig.js'; 
+import userRoutes from './routers/userroutes.js'; 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// === Importación Robustecida para evitar el error 'default' ===
+import * as carritoModule from './routers/carritoroutes.js'; 
+const carritoRoutes = carritoModule.default;
+// ==============================================================
+
+
+// --- Configuración Inicial ---
+
+dotenv.config(); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de la base de datos
-const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '', // Cambia según tu configuración
-    database: 'APICRUD_JUGUETES',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// Configuración para usar __dirname y __filename con módulos ES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); 
+const PROJECT_ROOT = path.join(__dirname, '..'); 
 
-// Middlewares
-app.use(express.json());
+// ====================================================================
+// 2. MIDDLEWARES GLOBALES
+// ====================================================================
+
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../frontend/public')));
 
-// Configuración de sesiones
-app.use(session({
-    secret: 'tu_secreto_super_seguro_aqui',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { 
-        secure: false, // Cambiar a true si usas HTTPS
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
-    }
-}));
-
-// Motor de plantillas EJS
+// Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../frontend/views'));
 
-// ==================== RUTAS ====================
+// Configurando VISTAS
+app.set('views', path.join(PROJECT_ROOT, 'frontend', 'views')); 
 
-// Página principal con búsqueda
-app.get('/', (req, res) => {
-    const searchQuery = req.query.q || '';
-    let query = 'SELECT * FROM productos WHERE stock > 0';
-    let params = [];
+// Configurando ARCHIVOS ESTÁTICOS: [ROOT]/frontend/public
+const PUBLIC_PATH = path.join(PROJECT_ROOT, 'frontend', 'public');
+app.use(express.static(PUBLIC_PATH));
 
-    if (searchQuery) {
-        query += ' AND (nombre LIKE ? OR descripcion LIKE ? OR categoria LIKE ?)';
-        const searchPattern = `%${searchQuery}%`;
-        params = [searchPattern, searchPattern, searchPattern];
-    }
+console.log(`[DEBUG RUTA ESTÁTICA]: Archivos servidos desde: ${PUBLIC_PATH}`); 
 
-    query += ' ORDER BY id_producto DESC LIMIT 20';
+// --- MOCK DE DATOS para Home y API ---
+function getMockProducts(category) {
+    const allProducts = {
+        'Destacados': [
+            { id: 1, nombre: "Vibrador Premium", descripcion: "Diseño ergonómico de alta gama", precio: 1299, imagen: '🌟', badge: 'Best Seller' },
+            { id: 2, nombre: "Set Lencería Deluxe", descripcion: "Elegancia y comodidad", precio: 899, imagen: '💜', badge: 'Top 2' },
+            { id: 3, nombre: "Aceite Masaje Sensual", descripcion: "Aromaterapia para parejas", precio: 449, imagen: '🎀', badge: 'Top 3' },
+            { id: 4, nombre: "Kit BDSM Principiantes", descripcion: "Todo para empezar", precio: 1599, imagen: '🔥', badge: 'Top 4' }
+        ],
+        'BDSM': [
+            { id: 101, nombre: 'Esposas de Terciopelo', descripcion: 'Suaves y resistentes.', precio: 850, imagen: '⛓️', badge: 'Nuevo' },
+            { id: 102, nombre: 'Máscara de Cuero', descripcion: 'Arnés ajustable.', precio: 2500, imagen: '🎭', badge: 'Top' },
+        ],
+        'Juguetes': [
+            { id: 201, nombre: 'Vibrador Bala', descripcion: 'Potente y discreto.', precio: 799, imagen: '⚡', badge: 'S/N' },
+            { id: 202, nombre: 'Dildo Clásico', descripcion: 'Textura realista.', precio: 1150, imagen: '🍆', badge: '' },
+        ],
+        'Lencería': [
+            { id: 301, nombre: 'Body de Encaje', descripcion: 'Transparente y sensual.', precio: 1599, imagen: '👗', badge: 'Hot' },
+        ],
+        'Bienestar': [
+            { id: 401, nombre: 'Velas Aromáticas', descripcion: 'Ambiente relajante.', precio: 300, imagen: '🕯️', badge: '' },
+        ],
+    };
+    return allProducts[category] || [];
+}
 
-    db.query(query, params, (err, productos) => {
-        if (err) {
-            console.error('Error al obtener productos:', err);
-            return res.status(500).send('Error al cargar productos');
-        }
+// ====================================================================
+// 3. RUTAS DE LA API (ENDPOINT DE BACKEND)
+// ====================================================================
 
-        res.render('main', {
-            title: searchQuery ? `Búsqueda: ${searchQuery}` : 'Inicio',
-            productos: productos,
-            searchQuery: searchQuery,
-            message: productos.length === 0 && searchQuery ? 'No se encontraron productos' : null
-        });
-    });
-});
+app.use('/api/users', userRoutes); 
+app.use('/api/carrito', carritoRoutes); 
 
-// API: Buscar productos (para búsqueda en tiempo real)
-app.get('/api/productos/buscar', (req, res) => {
-    const searchQuery = req.query.q || '';
+// RUTA API para tienda.js (Carga de productos dinámicos)
+app.get('/api/products/:categorySlug', (req, res) => {
+    const categoryName = req.params.categorySlug;
+    const products = getMockProducts(categoryName);
     
-    if (!searchQuery || searchQuery.trim().length < 2) {
-        return res.json({ productos: [] });
+    if (products.length > 0) {
+        res.json({ success: true, data: products });
+    } else {
+        res.status(404).json({ success: false, message: 'Categoría no encontrada o sin productos' });
     }
+});
 
-    const query = `
-        SELECT id_producto, nombre, descripcion, precio, stock, categoria, imagen_url 
-        FROM productos 
-        WHERE stock > 0 
-        AND (nombre LIKE ? OR descripcion LIKE ? OR categoria LIKE ?)
-        LIMIT 10
-    `;
+
+// ====================================================================
+// 4. RUTAS DE VISTAS (PÁGINAS EJS)
+// ====================================================================
+
+// --- RUTA PRINCIPAL (HOME) Y BÚSQUEDA ---
+app.get('/', async (req, res) => {
+    const searchQuery = req.query.q || ''; 
+    let productos = [];
+    let message = null;
+
+    // Cargar productos destacados para HOME (o resultado de búsqueda)
+    const allProducts = getMockProducts('Destacados');
+
+    if (searchQuery) {
+        // Lógica de búsqueda simulada
+        productos = allProducts.filter(p => 
+            p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            p.descripcion.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        if (productos.length === 0) {
+            message = `No se encontraron resultados para "${searchQuery}".`;
+        }
+    } else {
+        productos = allProducts;
+    }
+
+    // Renderizar main.ejs
+    res.render('main', { 
+        title: searchQuery ? `Búsqueda: ${searchQuery}` : 'Inicio',
+        productos: productos, 
+        searchQuery: searchQuery, 
+        message: message 
+    }); 
+});
+
+// --- OTRAS VISTAS ---
+app.get('/juguetes', (req, res) => { res.render('juguetes', { title: 'Juguetes' }); });
+app.get('/lenceria', (req, res) => { res.render('lenceria', { title: 'Lencería' }); });
+app.get('/bdsm', (req, res) => { res.render('bdsm', { title: 'BDSM' }); });
+app.get('/bienestar', (req, res) => { res.render('bienestar', { title: 'Bienestar' }); });
+app.get('/login', (req, res) => { res.render('login', { title: 'Iniciar Sesión' }); });
+
+
+// --- RUTA DEL CARRITO (AHORA CON DATOS DE BD) ---
+app.get('/carrito', async (req, res) => {
+    let itemsCarrito = [];
+    let errorMessage = null;
     
-    const searchPattern = `%${searchQuery}%`;
-    
-    db.query(query, [searchPattern, searchPattern, searchPattern], (err, productos) => {
-        if (err) {
-            console.error('Error en búsqueda:', err);
-            return res.status(500).json({ error: 'Error al buscar productos' });
-        }
-        res.json({ productos });
-    });
-});
-
-// API: Agregar producto al carrito
-app.post('/api/carrito/agregar', (req, res) => {
-    const { id_producto, cantidad = 1 } = req.body;
-    const id_usuario = req.session.userId;
-
-    if (!id_usuario) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Debes iniciar sesión para agregar productos al carrito',
-            requireLogin: true 
-        });
+    try {
+        // La función getCart está implementada en carritocontroller.js y devuelve los ítems
+        itemsCarrito = await getCart(req, res); 
+        
+    } catch (error) {
+        console.error("Error al cargar la página de carrito:", error.message);
+        errorMessage = 'Hubo un error al cargar tu carrito de compras. Intenta más tarde.';
     }
 
-    if (!id_producto) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'ID de producto no válido' 
-        });
-    }
-
-    // Verificar que el producto existe y tiene stock
-    db.query('SELECT * FROM productos WHERE id_producto = ? AND stock >= ?', 
-        [id_producto, cantidad], 
-        (err, productos) => {
-            if (err) {
-                console.error('Error al verificar producto:', err);
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Error al verificar el producto' 
-                });
-            }
-
-            if (productos.length === 0) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Producto no disponible o sin stock suficiente' 
-                });
-            }
-
-            const producto = productos[0];
-
-            // Obtener o crear carrito del usuario
-            db.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', 
-                [id_usuario], 
-                (err, carritos) => {
-                    if (err) {
-                        console.error('Error al obtener carrito:', err);
-                        return res.status(500).json({ 
-                            success: false, 
-                            message: 'Error al acceder al carrito' 
-                        });
-                    }
-
-                    let id_carrito;
-
-                    const agregarItem = () => {
-                        // Verificar si el producto ya está en el carrito
-                        db.query(
-                            'SELECT * FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
-                            [id_carrito, id_producto],
-                            (err, items) => {
-                                if (err) {
-                                    console.error('Error al verificar item:', err);
-                                    return res.status(500).json({ 
-                                        success: false, 
-                                        message: 'Error al verificar el carrito' 
-                                    });
-                                }
-
-                                if (items.length > 0) {
-                                    // Actualizar cantidad
-                                    const nuevaCantidad = items[0].cantidad + cantidad;
-                                    
-                                    db.query(
-                                        'UPDATE items_carrito SET cantidad = ? WHERE id_item = ?',
-                                        [nuevaCantidad, items[0].id_item],
-                                        (err) => {
-                                            if (err) {
-                                                console.error('Error al actualizar item:', err);
-                                                return res.status(500).json({ 
-                                                    success: false, 
-                                                    message: 'Error al actualizar el carrito' 
-                                                });
-                                            }
-
-                                            res.json({ 
-                                                success: true, 
-                                                message: 'Cantidad actualizada en el carrito',
-                                                producto: producto.nombre
-                                            });
-                                        }
-                                    );
-                                } else {
-                                    // Insertar nuevo item
-                                    db.query(
-                                        'INSERT INTO items_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
-                                        [id_carrito, id_producto, cantidad, producto.precio],
-                                        (err) => {
-                                            if (err) {
-                                                console.error('Error al insertar item:', err);
-                                                return res.status(500).json({ 
-                                                    success: false, 
-                                                    message: 'Error al agregar al carrito' 
-                                                });
-                                            }
-
-                                            res.json({ 
-                                                success: true, 
-                                                message: 'Producto agregado al carrito',
-                                                producto: producto.nombre
-                                            });
-                                        }
-                                    );
-                                }
-                            }
-                        );
-                    };
-
-                    if (carritos.length === 0) {
-                        // Crear nuevo carrito
-                        db.query(
-                            'INSERT INTO carritos (id_usuario) VALUES (?)',
-                            [id_usuario],
-                            (err, result) => {
-                                if (err) {
-                                    console.error('Error al crear carrito:', err);
-                                    return res.status(500).json({ 
-                                        success: false, 
-                                        message: 'Error al crear el carrito' 
-                                    });
-                                }
-
-                                id_carrito = result.insertId;
-                                agregarItem();
-                            }
-                        );
-                    } else {
-                        id_carrito = carritos[0].id_carrito;
-                        agregarItem();
-                    }
-                }
-            );
-        }
-    );
+    res.render('carrito', { 
+        title: 'Mi Carrito de Compras', 
+        items: itemsCarrito, // Pasamos el array de ítems a la vista
+        error: errorMessage
+    }); 
 });
 
-// API: Obtener carrito del usuario
-app.get('/api/carrito', (req, res) => {
-    const id_usuario = req.session.userId;
 
-    if (!id_usuario) {
-        return res.status(401).json({ 
-            success: false, 
-            message: 'Debes iniciar sesión' 
-        });
-    }
+// ====================================================================
+// 5. INICIO DEL SERVIDOR
+// ====================================================================
 
-    const query = `
-        SELECT 
-            ic.id_item,
-            ic.cantidad,
-            ic.precio_unitario,
-            p.id_producto,
-            p.nombre,
-            p.descripcion,
-            p.imagen_url,
-            (ic.cantidad * ic.precio_unitario) as subtotal
-        FROM carritos c
-        INNER JOIN items_carrito ic ON c.id_carrito = ic.id_carrito
-        INNER JOIN productos p ON ic.id_producto = p.id_producto
-        WHERE c.id_usuario = ?
-    `;
+async function startServer() {
+    await testConnection(); // Intenta conectar a la BD
+    
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor Express iniciado en el puerto ${PORT}`);
+        console.log(`🌐 Accede a la aplicación en http://localhost:${PORT}`);
+    });
+}
 
-    db.query(query, [id_usuario], (err, items) => {
-        if (err) {
-            console.error('Error al obtener carrito:', err);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Error al cargar el carrito' 
-            });
-        }
+startServer();
 
-        const total = items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0);
+// --- Manejo de errores 404 (JSON vs HTML) ---
+app.use((req, res) => {
+    // Verifica si la solicitud acepta JSON (típico de una llamada API)
+    if (req.accepts('json')) {
+        // Si es una llamada API, devuelve un JSON de error 404
+        return res.status(404).json({ success: false, message: 'Ruta API no encontrada' });
+    }
 
-        res.json({ 
-            success: true, 
-            items, 
-            total,
-            cantidad_items: items.length
-        });
-    });
-});
-
-// Página de carrito
-app.get('/carrito', (req, res) => {
-    if (!req.session.userId) {
-        return res.redirect('/login');
-    }
-
-    res.render('carrito', {
-        title: 'Mi Carrito'
-    });
-});
-
-// Página de login (simple)
-app.get('/login', (req, res) => {
-    res.render('login', {
-        title: 'Iniciar Sesión'
-    });
-});
-
-// Login POST
-app.post('/api/login', (req, res) => {
-    const { email, password } = req.body;
-
-    db.query('SELECT * FROM usuarios WHERE email = ?', [email], async (err, users) => {
-        if (err) {
-            console.error('Error en login:', err);
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Error al iniciar sesión' 
-            });
-        }
-
-        if (users.length === 0) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Email o contraseña incorrectos' 
-            });
-        }
-
-        const user = users[0];
-        const match = await bcrypt.compare(password, user.password_hash);
-
-        if (!match) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Email o contraseña incorrectos' 
-            });
-        }
-
-        req.session.userId = user.id_usuario;
-        req.session.userName = user.nombre;
-
-        res.json({ 
-            success: true, 
-            message: 'Inicio de sesión exitoso',
-            user: { nombre: user.nombre, email: user.email }
-        });
-    });
-});
-
-// Logout
-app.post('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Error al cerrar sesión' 
-            });
-        }
-        res.json({ success: true, message: 'Sesión cerrada' });
-    });
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    // Si acepta HTML (típico de navegar a una URL), devuelve la vista 404
+    res.status(404).render('404', { title: 'Página no encontrada' });
 });
