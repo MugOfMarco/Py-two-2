@@ -2,36 +2,51 @@ import userModel from '../models/usermodel.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Se recomienda obtener la clave secreta del .env y guardarla aquí
-const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_super_segura'; 
-// Asegúrate de definir JWT_SECRET en tu archivo .env: JWT_SECRET=una_frase_muy_larga_y_aleatoria
+// Se recomienda usar la clave secreta del .env
+const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_debes_cambiar_esto'; 
 
 /**
  * Lógica para registrar un nuevo usuario (POST /api/usuarios/registro).
  */
 export async function registrarUsuario(req, res) {
-    const { nombre, email, password } = req.body;
+    const { 
+        nombre, 
+        apellido, 
+        email, 
+        password, 
+        telefono, 
+        fecha_nacimiento, 
+        codigo_postal 
+    } = req.body;
     
-    // 1. Validaciones básicas
-    if (!nombre || !email || !password) {
-        return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+    // Validaciones básicas (se complementan con express-validator)
+    if (!nombre || !apellido || !email || !password || !fecha_nacimiento) {
+        return res.status(400).json({ message: 'Campos requeridos faltantes.' });
     }
 
     try {
-        // 2. Verificar si el email ya existe
+        // 1. Verificar si el email ya existe
         const usuarioExistente = await userModel.buscarUsuarioPorEmail(email);
         if (usuarioExistente) {
             return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
         }
 
-        // 3. Encriptar la contraseña (Usando 10 rondas de salting)
+        // 2. Encriptar la contraseña (seguridad)
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // 4. Crear el usuario en la BD
-        const nuevoUsuario = await userModel.crearUsuario(nombre, email, passwordHash);
+        // 3. Crear el usuario en la BD (llama al Modelo)
+        const nuevoUsuario = await userModel.crearUsuario(
+            nombre, 
+            apellido, 
+            email, 
+            passwordHash, 
+            telefono, 
+            fecha_nacimiento, 
+            codigo_postal
+        );
 
-        // 5. Respuesta exitosa
+        // 4. Respuesta exitosa
         res.status(201).json({ 
             message: 'Usuario registrado exitosamente.',
             id_usuario: nuevoUsuario.id_usuario
@@ -54,14 +69,13 @@ export async function iniciarSesion(req, res) {
     }
 
     try {
-        // 1. Buscar usuario por email
+        // 1. Buscar usuario
         const usuario = await userModel.buscarUsuarioPorEmail(email);
         if (!usuario) {
-            // Se usa el mismo mensaje para seguridad (no revelar si existe el usuario o si la contraseña es incorrecta)
             return res.status(401).json({ message: 'Credenciales inválidas.' });
         }
 
-        // 2. Comparar la contraseña ingresada con el hash de la BD
+        // 2. Comparar la contraseña (desencriptación)
         const esValido = await bcrypt.compare(password, usuario.password_hash);
         if (!esValido) {
             return res.status(401).json({ message: 'Credenciales inválidas.' });
@@ -71,7 +85,7 @@ export async function iniciarSesion(req, res) {
         const token = jwt.sign(
             { id: usuario.id_usuario, email: usuario.email },
             JWT_SECRET,
-            { expiresIn: '1h' } // El token expira en 1 hora
+            { expiresIn: '1h' } // Token expira en 1 hora
         );
 
         // 4. Respuesta exitosa

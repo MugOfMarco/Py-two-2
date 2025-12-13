@@ -1,14 +1,22 @@
-import { pool } from '../config/bdconfig.js';
+import { pool } from '../config/dbconfig.js';
 
 /**
  * Registra un nuevo usuario en la base de datos.
  */
-export async function crearUsuario(nombre, email, passwordHash) {
+export async function crearUsuario(nombre, apellido, email, passwordHash, telefono, fechaNacimiento, codigoPostal) {
     const query = `
-        INSERT INTO usuarios (nombre, email, password_hash)
-        VALUES (?, ?, ?)
+        INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, fecha_nacimiento, codigo_postal)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    const [result] = await pool.execute(query, [nombre, email, passwordHash]);
+    const [result] = await pool.execute(query, [
+        nombre, 
+        apellido, 
+        email, 
+        passwordHash, 
+        telefono, 
+        fechaNacimiento, 
+        codigoPostal
+    ]);
     return { id_usuario: result.insertId };
 }
 
@@ -26,15 +34,16 @@ export async function buscarUsuarioPorEmail(email) {
 }
 
 /**
- * Actualiza los datos de perfil de un usuario.
+ * Actualiza los datos de perfil de un usuario (ejemplo).
  */
 export async function actualizarUsuario(id_usuario, datos) {
+    // Para simplificar, solo actualizamos nombre y apellido aquí
     const query = `
         UPDATE usuarios 
-        SET nombre = ?, direccion_envio = ? 
+        SET nombre = ?, apellido = ? 
         WHERE id_usuario = ?
     `;
-    const [result] = await pool.execute(query, [datos.nombre, datos.direccion_envio, id_usuario]);
+    const [result] = await pool.execute(query, [datos.nombre, datos.apellido, id_usuario]);
     return result.affectedRows;
 }
 

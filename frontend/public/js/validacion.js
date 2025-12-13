@@ -1,14 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registerForm');
-    
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            // Detenemos el envío por defecto para manejar la validación con JS
-            event.preventDefault(); 
 
-            // Ejecutamos la función de validación y, si falla, salimos.
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            // 1. Ejecutar la validación del lado del cliente
             if (!validarFormulario()) {
-                // Si la validación falla, podemos enfocar el primer campo con error (opcional)
                 const primerError = document.querySelector('.input-validation-error');
                 if (primerError) {
                     primerError.focus();
@@ -16,16 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Si pasa todas las validaciones, se podría ejecutar la lógica de envío (AJAX, Fetch, etc.)
-            alert('¡Registro exitoso! (Simulación de envío)');
-            // form.submit(); // Descomentar para enviar el formulario realmente
+            // 2. Si la validación es exitosa, se procede con el envío de datos a la API
+            enviarRegistroAPI();
         });
     }
 
     // --- FUNCIÓN PRINCIPAL DE VALIDACIÓN ---
     function validarFormulario() {
         let esValido = true;
-        
+
         // Limpiamos los estados de error previos
         document.querySelectorAll('.input-validation-error').forEach(el => {
             el.classList.remove('input-validation-error');
@@ -45,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 esValido = false;
             }
         });
-        
+
         // 3. Campo de Teléfono (Solo Números)
         document.querySelectorAll('.input-numeros').forEach(input => {
             if (!validarInputNumeros(input)) {
@@ -60,16 +57,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. Confirmación de Contraseña (debe ir después de validar la principal)
+        // 5. Confirmación de Contraseña
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirm_password');
+        // Usamos la clase simple 'input' o ninguna para Confirmar Contraseña
         if (password && confirmPassword) {
             if (!validarConfirmacionPassword(password, confirmPassword)) {
                 esValido = false;
             }
         }
         
-        // 6. Validación de la casilla de Términos (siempre debe ser obligatorio)
+        // 6. Campo Fecha de Nacimiento (Validación de Edad)
+        const fechaNacimiento = document.getElementById('fecha_nacimiento');
+        if (fechaNacimiento) {
+             if (!validarEdad(fechaNacimiento)) {
+                 esValido = false;
+             }
+        }
+
+        // 7. Campo Código Postal
+        const codigoPostal = document.getElementById('codigo_postal');
+        if (codigoPostal) {
+            if (!validarCodigoPostal(codigoPostal)) {
+                esValido = false;
+            }
+        }
+        
+        // 8. Validación de la casilla de Términos (Si la agregas al HTML)
         const termsCheckbox = document.getElementById('terms');
         if (termsCheckbox && !termsCheckbox.checked) {
             mostrarError(termsCheckbox.closest('.terms-checkbox'), 'Debes aceptar los términos y condiciones.');
@@ -79,16 +93,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return esValido;
     }
 
+    // --- FUNCIÓN PARA EL ENVÍO DE DATOS A LA API ---
+    async function enviarRegistroAPI() {
+        // Recoger todos los datos del formulario
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/usuarios/registro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const responseData = await response.json();
+
+            if (response.ok) {
+                alert('✅ ¡Registro exitoso! Ahora puedes iniciar sesión.');
+                // Redirigir al login después del registro
+                window.location.href = '/login.html'; 
+            } else {
+                // Manejar errores de validación del Backend (ej: Email ya registrado)
+                alert('❌ Error de registro: ' + (responseData.message || 'Verifica tus datos.'));
+            }
+        } catch (error) {
+            console.error('Error de conexión/servidor:', error);
+            alert('Hubo un problema al conectar con el servidor. Intenta de nuevo más tarde.');
+        }
+    }
+
     // --- FUNCIONES ESPECÍFICAS DE VALIDACIÓN ---
 
-    // 1. Validación para input-letras (Nombre y Apellido)
     function validarInputLetras(input) {
         const value = input.value.trim();
         const minLength = 4;
         const maxLength = 64;
-        
-        // Expresión Regular: Solo letras (incluyendo acentos, ñ), espacios, puntos (.) y guiones bajos (_)
-        // No permite que empiece o termine con un caracter especial
         const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\._]{4,64}$/; 
 
         if (value.length < minLength || value.length > maxLength) {
@@ -104,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    // 2. Validación para input-correo
     function validarInputCorreo(input) {
         const value = input.value.trim();
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
@@ -116,18 +156,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    // 3. Validación para input-numeros (Teléfono)
     function validarInputNumeros(input) {
-        const value = input.value.trim().replace(/\D/g, ''); // Elimina todo lo que NO sea un dígito
-        const minDigits = 8; // He usado 8 o 10 como mínimo típico, no 18. Si necesitas 18, ajusta aquí.
+        const value = input.value.trim().replace(/\D/g, ''); 
+        const minDigits = 8; 
         const maxDigits = 10;
         
-        // Si el campo no es requerido y está vacío, se acepta
         if (!input.required && value === '') {
             return true;
         }
         
-        // Expresión Regular: Solo dígitos, entre 8 y 10
         const regex = /^\d{8,10}$/; 
 
         if (value.length < minDigits || value.length > maxDigits) {
@@ -143,16 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    // 4. Validación para input-password
     function validarInputPassword(input) {
         const value = input.value;
         const minLength = 8;
         const maxLength = 64;
         
         // Requiere: Al menos 8 caracteres, una mayúscula, un número.
-        // (?=.*[A-Z]): Debe contener al menos una letra mayúscula.
-        // (?=.*\d): Debe contener al menos un dígito.
-        // [A-Za-z\d@$!%*#?&]{8,64}: Caracteres permitidos y longitud.
         const regex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,64}$/;
 
         if (value.length < minLength || value.length > maxLength) {
@@ -168,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
     
-    // 5. Validación de Confirmación de Contraseña
     function validarConfirmacionPassword(passwordInput, confirmInput) {
         if (passwordInput.value !== confirmInput.value) {
             mostrarError(confirmInput, 'Las contraseñas no coinciden.');
@@ -176,29 +208,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return true;
     }
+
+    function validarEdad(input) {
+        const birthday = new Date(input.value);
+        const today = new Date();
+        const minAge = 18;
+        
+        let age = today.getFullYear() - birthday.getFullYear();
+        const monthDifference = today.getMonth() - birthday.getMonth();
+        
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthday.getDate())) {
+            age--;
+        }
+
+        if (age < minAge) {
+            mostrarError(input, `Debes ser mayor de ${minAge} años para registrarte.`);
+            return false;
+        }
+        return true;
+    }
+
+    function validarCodigoPostal(input) {
+        const value = input.value.trim();
+        // Regex simple para 5 dígitos
+        const regex = /^\d{5}$/; 
+
+        if (!input.required && value === '') {
+            return true;
+        }
+
+        if (!regex.test(value)) {
+            mostrarError(input, 'Introduce un código postal válido (5 dígitos).');
+            return false;
+        }
+        return true;
+    }
     
     // --- FUNCIÓN DE UTILIDAD PARA MOSTRAR ERRORES EN EL DOM ---
     function mostrarError(inputElement, mensaje) {
-        // Asegura que solo se añada la clase una vez
         inputElement.classList.add('input-validation-error');
         
-        // Crea el elemento de mensaje de error
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = mensaje;
 
-        // Busca el contenedor padre (form-group) para insertar el mensaje
         const formGroup = inputElement.closest('.form-group') || inputElement.closest('.terms-checkbox');
         
-        // Si el mensaje de error ya existe para este campo, lo reemplazamos
         const existingError = formGroup.querySelector('.error-message');
         if (existingError) {
             existingError.textContent = mensaje;
         } else if (formGroup) {
-            // Inserta el mensaje de error después del input
             formGroup.appendChild(errorDiv);
         }
     }
 });
-
-// Nota sobre el Teléfono: Se usó 8 a 10 dígitos, ya que 18 dígitos para un teléfono no es un estándar común. Si el requerimiento es estrictamente 18, cambiar la variable minDigits.
