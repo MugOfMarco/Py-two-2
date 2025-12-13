@@ -1,42 +1,28 @@
-// backend/routers/carritorouters.js
+// backend/routers/carritoroutes.js (Versión COMPLETA y FINAL)
 
-import { Router } from 'express';
+import express from 'express';
 import { 
-    getCart, 
-    getCartItemCount,
     addOrUpdateCartItem, 
-    removeItemFromCart,
-    clearUserCart 
-} from '../controllers/carritocontroller.js'; 
-// Ajusta la ruta de importación si es necesario.
+    getCartAPI,          
+    removeItem,          
+    clearCart,           
+} from '../controllers/carritocontroller.js';
 
-const router = Router();
+const router = express.Router();
 
-// =======================================================
-// RUTAS DE LA API PARA EL CARRITO (/api/carrito)
-// =======================================================
+// 1. POST /api/carrito - RUTA PARA EL CHANGE QUANTITY DEL CARRITO.JS
+router.post('/', addOrUpdateCartItem);
 
-// 1. OBTENER CARRITO COMPLETO Y CONTEO DE ÍTEMS
-// Nota: La URL es /api/carrito/usuario/1 (si el ID es 1)
-router.get('/usuario/:userId', getCart);
+// 1.b POST /api/carrito/add - ¡RUTA AÑADIDA PARA TIENDA.JS!
+router.post('/add', addOrUpdateCartItem); 
 
-// 2. OBTENER SOLO EL CONTEO DE ÍTEMS (Usado por el header en tienda.js)
-// URL: /api/carrito/count/usuario/1
-router.get('/count/usuario/:userId', getCartItemCount);
+// 2. GET /api/carrito/usuario/:userId - Obtener todos los ítems para renderizar
+router.get('/usuario/:userId', getCartAPI); 
 
-// 3. AÑADIR O ACTUALIZAR ÍTEM (POST)
-// Se usa POST para enviar { userId, productId, quantity } y dejar que el backend
-// decida si es una creación o una actualización.
-// URL: /api/carrito
-router.post('/', addOrUpdateCartItem); 
+// 3. DELETE /api/carrito/item/:productId - Eliminar un solo ítem
+router.delete('/item/:productId', removeItem); 
 
-// 4. ELIMINAR ÍTEM ESPECÍFICO
-// URL: DELETE /api/carrito/item/10 (si el ID del producto es 10)
-router.delete('/item/:productId', removeItemFromCart);
-
-// 5. VACIAR CARRITO COMPLETO
-// URL: DELETE /api/carrito/usuario/1
-router.delete('/usuario/:userId', clearUserCart);
-
+// 4. DELETE /api/carrito/usuario/:userId - Vaciar todo el carrito
+router.delete('/usuario/:userId', clearCart); 
 
 export default router;
