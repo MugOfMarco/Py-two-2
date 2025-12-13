@@ -2,8 +2,8 @@ import userModel from '../models/usermodel.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Se recomienda usar la clave secreta del .env
-const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_debes_cambiar_esto'; 
+
+const JWT_SECRET = process.env.JWT_SECRET; 
 
 /**
  * Lógica para registrar un nuevo usuario (POST /api/usuarios/registro).
@@ -85,7 +85,7 @@ export async function iniciarSesion(req, res) {
         const token = jwt.sign(
             { id: usuario.id_usuario, email: usuario.email },
             JWT_SECRET,
-            { expiresIn: '1h' } // Token expira en 1 hora
+            { expiresIn: '1h' } 
         );
 
         // 4. Respuesta exitosa
