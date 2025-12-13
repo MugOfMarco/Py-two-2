@@ -821,3 +821,17 @@ input:focus, select:focus {
 
 
 }
+
+/* Añade un borde rojo a los inputs con error */
+.input-validation-error {
+    border: 1px solid #dc3545 !important; /* Rojo */
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Estilo para los mensajes de error */
+.error-message {
+    color: #dc3545;
+    font-size: 0.85em;
+    margin-top: 5px;
+    padding-left: 2px;
+}
