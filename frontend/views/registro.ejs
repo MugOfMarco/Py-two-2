@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - π two 2</title>
+    <link rel="stylesheet" href="../css/registro.css">
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-side">
+            <h2>Crear Cuenta</h2>
+            <p class="subtitle">Únete a nuestra comunidad</p>
+            <form id="registerForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Juan" required class="input-letras">
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellido</label>
+                        <input type="text" id="apellido" name="apellido" placeholder="Pérez" required class="input-letras">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo electrónico</label>
+                    <input type="email" id="email" name="email" placeholder="tu@email.com" required class="input-correo"> 
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="+52 123 456 7890" class="input-numeros">
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8" class="input-password">
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirmar Contraseña</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••"
+                        required class="input-password">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="codigo_postal">Código Postal</label>
+                        <input type="text" id="codigo_postal" name="codigo_postal" placeholder="01000" >
+                    </div>
+                </div>
+                <button type="submit" class="btn-register">Crear Cuenta</button>
+                <div class="login-link">
+                    ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
+                </div>
+
+                
+            </form>
+
+            <div id="mensaje-api" style="margin-bottom: 15px;"></div>
+        </div>
+        <div class="brand-side">
+            <div class="logo">π two 2</div>
+            <p class="brand-tagline">Tu tienda de confianza para el bienestar íntimo<br>Discreción y calidad garantizada
+            </p>
+        </div>
+    </div>
+
+    <script src="../js/validacion.js"></script>
+</body>
+</html>
