@@ -38,26 +38,28 @@ app.use('/api/usuarios', userRoutes);
 
 // === RUTAS DE VISTA DEL FRONTEND ===
 
-// 1. Ruta de Inicio (La raíz ahora carga la página de LOGIN)
+// --- RUTAS DE VISTA DEL FRONTEND (CORREGIDAS) ---
+
 app.get('/', (req, res) => {
-    // Usa res.render SIN extensión (.ejs) y SIN barra inicial (/)
-    res.render('login'); 
+    res.render('login', { title: 'Iniciar Sesión' }); 
 });
 
-// 2. Ruta de Login (Si alguien navega directamente a /login)
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('login', { title: 'Iniciar Sesión' });
 });
 
-// 3. Ruta de Registro
 app.get('/registro', (req, res) => {
-    // Busca el archivo 'registro.ejs' en la carpeta views
-    res.render('registro'); 
+    res.render('registro', { title: 'Crear Cuenta' }); 
 });
 
 app.get('/main', (req, res) => {
-    // Carga la vista 'main.ejs'
-    res.render('main');
+    // Inicializamos todas las variables esperadas por main.ejs
+    res.render('main', { 
+        title: 'Tienda Principal', 
+        searchQuery: '',        // Se inicializa para evitar el ReferenceError
+        message: null,          // Se inicializa a null (o '') para el alert
+        productos: []           // Se inicializa como un array vacío para evitar errores en el forEach
+    });
 });
 // ------------------------------------------------------------------
 // INICIO DEL SERVIDOR

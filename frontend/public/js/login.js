@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('userToken', data.token);
                     console.log("Inicio de sesión exitoso. Redirigiendo...");
                     alert('✅ Inicio de sesión exitoso. ¡Bienvenido!');
-                    window.location.href = '/main.ejs'; // Redirigir a la página principal
+                    window.location.href = '/main'; // Redirigir a la página principal
 
                 } else {
                     alert('❌ Error: ' + data.message);
