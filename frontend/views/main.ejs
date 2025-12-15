@@ -11,7 +11,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <a href="/">
+                    <a href="/main">
                         <h1>π two 2</h1>
                         <span class="tagline">Tu bienestar íntimo</span>
                     </a>
@@ -40,34 +40,10 @@
         </div>
     </header>
 
-    <% if (!searchQuery) { %>
-    <section class="categories">
-        <div class="container">
-            <div class="category-grid">
-                <a href="/bdsm" class="category-card bdsm">
-                    <div class="category-icon">🔗</div>
-                    <h3>BDSM</h3>
-                    <p>Explora tu lado atrevido</p>
-                </a>
-                <a href="/bienestar" class="category-card bienestar">
-                    <div class="category-icon">💆‍♀️</div>
-                    <h3>Bienestar</h3>
-                    <p>Cuida de ti</p>
-                </a>
-                <a href="/juguetes" class="category-card juguetes">
-                    <div class="category-icon">✨</div>
-                    <h3>Juguetes</h3>
-                    <p>Diversión garantizada</p>
-                </a>
-                <a href="/lenceria" class="category-card lenceria">
-                    <div class="category-icon">👗</div>
-                    <h3>Lencería</h3>
-                    <p>Siéntete sensual</p>
-                </a>
-            </div>
-        </div>
-    </section>
-    <% } %>
+    <% 
+    // --- SECCIÓN DE CATEGORÍAS ELIMINADA AQUÍ --- 
+    // La sección completa <section class="categories"> ya no está.
+    %>
 
     <section class="top-sales">
         <div class="container">
@@ -86,7 +62,6 @@
             <% } %>
 
             <div class="products-grid">
-                
                 <% productos.forEach(function(producto) { %>
                 <div class="product-card">
                     <% if (producto.badge) { %>
@@ -99,7 +74,7 @@
                     <p class="product-description"><%= producto.descripcion %></p>
                     <div class="product-footer">
                         <span class="product-price">$<%= producto.precio.toLocaleString('es-MX') %></span>
-                        <button class="add-to-cart-btn" onclick="addToCart(<%= producto.id %>)" data-id="<%= producto.id %>">Agregar</button> 
+                        <button class="add-to-cart-btn" onclick="addToCart('<%= producto.id %>')" data-id="<%= producto.id %>">Agregar</button> 
                     </div>
                 </div>
                 <% }); %>
@@ -182,4 +157,3 @@
     <script src="/js/tienda.js"></script>
 </body>
 </html>
-
