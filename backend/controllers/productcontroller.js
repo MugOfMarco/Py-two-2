@@ -1,27 +1,25 @@
 // backend/controllers/productcontroller.js
 
-// Importamos el cliente real de BD (pool, asumiendo la exportación desde bdconfig.js)
 import { pool } from '../config/dbconfig.js'; 
 
-
 /**
- * Obtiene los productos para la vista principal (Home o Resultados de Búsqueda) usando la BD.
+ * Función central para obtener productos de la BD.
+ * Esta función es llamada internamente o por el controlador que sirve la vista.
  * @param {object} options - Opciones que incluyen el término de búsqueda.
  * @returns {Promise<{productos: Array, message: string|null}>}
  */
-export async function getProducts({ query }) {
+export async function getProductsData({ query }) {
     let productos = [];
     let message = null;
 
     try {
         // --- NOMBRES DE COLUMNAS COINCIDIENDO CON EL ESQUEMA 'productos' ---
-        // Usamos id_producto AS id para que el frontend lo reconozca
+        // 🚨 CRÍTICO: Eliminamos imagen_url ya que no existe en la BD
         const COLUMN_SELECT = `
             id_producto AS id, 
             nombre AS nombre, 
             descripcion AS descripcion, 
             precio AS precio, 
-            imagen_url AS imagen, 
             NULL AS badge 
         `;
         // -----------------------------------------------------------------
@@ -29,7 +27,6 @@ export async function getProducts({ query }) {
         let result;
         
         if (query) {
-            // Consulta de Búsqueda en la BD (Usando ? para MySQL)
             const searchTerm = `%${query}%`;
             const sql = `
                 SELECT ${COLUMN_SELECT} 
@@ -37,46 +34,66 @@ export async function getProducts({ query }) {
                 WHERE nombre LIKE ? OR descripcion LIKE ?
             `;
             
-            result = await pool.query(sql, [searchTerm, searchTerm]);
+            // Usamos execute si tu cliente MySQL devuelve [rows, fields]
+            const [rows] = await pool.execute(sql, [searchTerm, searchTerm]);
+            productos = rows;
             
-        } else {
-            // Consulta para obtener productos de Home
+       } else {
+            // Consulta para obtener productos de Home (MODIFICADA)
             const sql = `
                 SELECT ${COLUMN_SELECT} 
                 FROM productos 
                 WHERE stock > 0
                 ORDER BY id_producto DESC
-                LIMIT 4
+                -- LIMIT 4  <-- LÍNEA ELIMINADA O COMENTADA
             `;
             
-            result = await pool.query(sql);
+            // Usamos execute si tu cliente MySQL devuelve [rows, fields]
+            const [rows] = await pool.execute(sql);
+            productos = rows;
         }
 
-        // ****** MANEJO DE RESULTADOS (CORRECCIÓN DEL ERROR 'length') ******
-        // Asume el patrón de MySQL (result es un array donde el primer elemento [0] son las filas)
-        if (Array.isArray(result) && Array.isArray(result[0])) {
-            productos = result[0];
-        } 
-        // Patron de node-postgres (result es un objeto con la propiedad .rows)
-        else if (result && Array.isArray(result.rows)) {
-            productos = result.rows;
-        } 
-        // Si el resultado es directamente un array de filas
-        else if (Array.isArray(result)) {
-            productos = result;
-        }
-
-        // Revisar si la búsqueda o la carga inicial no devolvió filas
         if (productos.length === 0) {
             message = query ? `No se encontraron resultados para "${query}".` : 'No hay productos disponibles en este momento.';
         }
 
-
     } catch (error) {
-        console.error("Error en productController.getProducts (BD):", error.message);
-        // Volver a lanzar un error con un mensaje general para la capa de presentación
+        console.error("Error en productController.getProductsData (BD):", error.message);
+        // Devolvemos un error que la capa superior pueda manejar
         throw new Error("Error interno del servidor al obtener productos de la base de datos.");
     }
     
     return { productos, message };
 }
+
+
+/**
+ * 🎯 Controlador para la API de productos (GET /api/productos)
+ * Devuelve el catálogo en formato JSON.
+ */
+export const getProductsAPI = async (req, res) => {
+    try {
+        const query = req.query.q || null; // Captura el parámetro de búsqueda 'q'
+        const { productos, message } = await getProductsData({ query });
+
+        return res.status(200).json({
+            success: true,
+            productos,
+            message
+        });
+
+    } catch (error) {
+        // Manejo de errores de BD o internos
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+export default {
+    getProductsAPI,
+    getProductsData
+};
+
+export { getProductsData as getProducts };
