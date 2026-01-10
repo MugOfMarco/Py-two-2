@@ -1,32 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. Definición Global de la Función addToCart ---
     window.addToCart = async function(productId) { 
-        console.log(`[CARRITO] Intentando agregar producto ${productId} al carrito (Llamada a API).`);
-        
+        const token = localStorage.getItem('userToken');
+        // Asegúrate de que el login guarde el 'userId' en localStorage
+        const userId = localStorage.getItem('userId'); 
+
+        if (!token || !userId) {
+            alert("Por favor, inicia sesión para comprar.");
+            window.location.href = '/login';
+            return;
+        }
+
         try {
-            // Llama al router de carrito con la nueva ruta POST /api/carrito/add
             const response = await fetch('/api/carrito/add', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ productId: productId, quantity: 1 }) // Enviamos el ID y cantidad
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id_usuario: userId, 
+                    id_producto: productId, 
+                    cantidad: 1 
+                })
             });
             
             const result = await response.json();
-    
-            if (response.ok && result.success) {
-                console.log(`✅ [CARRITO] Producto ${productId} agregado exitosamente a la BD.`);
-                alert(`"${productId}" agregado al carrito.`);
+            if (result.success) {
+                alert("✅ Producto añadido al carrito.");
             } else {
-                console.error(`❌ [CARRITO] Error al agregar a la BD:`, result.message || 'Error desconocido.');
-                alert('Error: No se pudo agregar el producto. Revisa la consola.');
+                alert("❌ Error: " + result.message);
             }
-    
         } catch (error) {
-            console.error('❌ [CARRITO] Fallo en la comunicación con el servidor:', error);
-            alert('Error de conexión con el servidor.');
+            alert("Error de conexión.");
         }
     }
     

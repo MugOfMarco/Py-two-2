@@ -9,11 +9,11 @@ import { fileURLToPath } from 'url';
 // Importación de Controladores de Lógica (BD)
 import { getCart } from './controllers/carritocontroller.js';
 // 🚨 CAMBIO/AGREGADO 1: Importamos la función getProducts (alias de getProductsData)
-import { getProducts } from './controllers/productcontroller.js'; 
+import { getProducts } from './controllers/productcontroller.js';
 
 // Importación de Configuración y Rutas
-import { testConnection } from './config/dbconfig.js'; 
-import userRoutes from './routers/userroutes.js'; 
+import { testConnection } from './config/dbconfig.js';
+import userRoutes from './routers/userroutes.js';
 import carritoRoutes from './routers/carritoroutes.js';
 // 🚨 AGREGADO 2: Importación de las Rutas de la API de Productos
 import productRoutes from './routers/productroutes.js';
@@ -21,44 +21,44 @@ import productRoutes from './routers/productroutes.js';
 
 // --- Configuración Inicial ---
 
-dotenv.config(); 
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuración para usar __dirname y __filename con módulos ES
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); 
-const PROJECT_ROOT = path.join(__dirname, '..'); 
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.join(__dirname, '..');
 
 // ====================================================================
 // 2. MIDDLEWARES GLOBALES
 // ====================================================================
 
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Configurar EJS como motor de plantillas
 app.set('view engine', 'ejs');
 
 // Configurando VISTAS
-app.set('views', path.join(PROJECT_ROOT, 'frontend', 'views')); 
+app.set('views', path.join(PROJECT_ROOT, 'frontend', 'views'));
 
 // Configurando ARCHIVOS ESTÁTICOS: [ROOT]/frontend/public
 const PUBLIC_PATH = path.join(PROJECT_ROOT, 'frontend', 'public');
 app.use(express.static(PUBLIC_PATH));
 
-console.log(`[DEBUG RUTA ESTÁTICA]: Archivos servidos desde: ${PUBLIC_PATH}`); 
+console.log(`[DEBUG RUTA ESTÁTICA]: Archivos servidos desde: ${PUBLIC_PATH}`);
 
 
 // ====================================================================
 // 3. RUTAS DE LA API (ENDPOINT DE BACKEND)
 // ====================================================================
 
-app.use('/api/users', userRoutes); 
-app.use('/api/carrito', carritoRoutes); 
+app.use('/api/users', userRoutes);
+app.use('/api/carrito', carritoRoutes);
 // 🚨 AGREGADO 3: Montamos la ruta de la API de Productos
-app.use('/api/productos', productRoutes); 
+app.use('/api/productos', productRoutes);
 
 
 // ====================================================================
@@ -68,46 +68,54 @@ app.use('/api/productos', productRoutes);
 // --- RUTA PRINCIPAL (REDISPOSICIÓN DE HOME) ---
 // La ruta '/' ahora redirige a /login (según tu solicitud)
 app.get('/', (req, res) => {
-    res.redirect('/login');
+    res.redirect('/login');
 });
 
+// --- RUTA DEL CARRITO (ACTUALIZADA) ---
+// 🚨 CAMBIO: Solo enviamos la página. El JS del navegador pedirá los datos usando el userId del localStorage.
+app.get('/carrito', (req, res) => {
+    res.render('carrito', { 
+        title: 'Mi Carrito de Compras',
+        // Ya no pasamos "items" desde aquí para evitar el error de "ID inválido"
+    }); 
+});
 
 // --- RUTAS DE AUTENTICACIÓN (Del segundo fragmento) ---
-app.get('/login', (req, res) => { 
-    res.render('login', { title: 'Iniciar Sesión' }); 
-}); 
+app.get('/login', (req, res) => {
+    res.render('login', { title: 'Iniciar Sesión' });
+});
 
-app.get('/registro', (req, res) => { 
-    res.render('registro', { title: 'Crear Cuenta' });  
-}); 
+app.get('/registro', (req, res) => {
+    res.render('registro', { title: 'Crear Cuenta' });
+});
 
 
 // --- RUTA PRINCIPAL DE TIENDA (AHORA ES '/main') ---
 app.get('/main', async (req, res) => {
-    const searchQuery = req.query.q || ''; 
-    let productos = [];
-    let message = null;
+    const searchQuery = req.query.q || '';
+    let productos = [];
+    let message = null;
 
-    try {
-        // ✅ CORREGIDO: Usamos la función 'getProducts' (alias) que ya funciona
-        const result = await getProducts({ query: searchQuery }); 
-        
-        productos = result.productos;
-        message = result.message; 
-        
-    } catch (error) {
-        // Captura errores de conexión o consulta de la BD
-        console.error("Error al cargar productos de la tienda:", error.message);
-        message = 'Hubo un error al cargar los productos de la tienda.';
-    }
+    try {
+        // ✅ CORREGIDO: Usamos la función 'getProducts' (alias) que ya funciona
+        const result = await getProducts({ query: searchQuery });
 
-    // Renderizar main.ejs
-    res.render('main', { 
-        title: searchQuery ? `Búsqueda: ${searchQuery}` : 'Inicio',
-        productos: productos, 
-        searchQuery: searchQuery, 
-        message: message 
-    }); 
+        productos = result.productos;
+        message = result.message;
+
+    } catch (error) {
+        // Captura errores de conexión o consulta de la BD
+        console.error("Error al cargar productos de la tienda:", error.message);
+        message = 'Hubo un error al cargar los productos de la tienda.';
+    }
+
+    // Renderizar main.ejs
+    res.render('main', {
+        title: searchQuery ? `Búsqueda: ${searchQuery}` : 'Inicio',
+        productos: productos,
+        searchQuery: searchQuery,
+        message: message
+    });
 });
 
 
@@ -120,23 +128,23 @@ app.get('/bienestar', (req, res) => { res.render('bienestar', { title: 'Bienesta
 
 // --- RUTA DEL CARRITO (CON DATOS DE BD REAL) ---
 app.get('/carrito', async (req, res) => {
-    let itemsCarrito = [];
-    let errorMessage = null;
-    
-    try {
-        // Llama al controlador de carrito que usa la BD
-        itemsCarrito = await getCart(req, res); 
-        
-    } catch (error) {
-        console.error("Error al cargar la página de carrito:", error.message);
-        errorMessage = 'Hubo un error al cargar tu carrito de compras. Intenta más tarde.';
-    }
+    let itemsCarrito = [];
+    let errorMessage = null;
 
-    res.render('carrito', { 
-        title: 'Mi Carrito de Compras', 
-        items: itemsCarrito, // Array de ítems devuelto por el controlador de BD
-        error: errorMessage
-    }); 
+    try {
+        // Llama al controlador de carrito que usa la BD
+        itemsCarrito = await getCart(req, res);
+
+    } catch (error) {
+        console.error("Error al cargar la página de carrito:", error.message);
+        errorMessage = 'Hubo un error al cargar tu carrito de compras. Intenta más tarde.';
+    }
+
+    res.render('carrito', {
+        title: 'Mi Carrito de Compras',
+        items: itemsCarrito, // Array de ítems devuelto por el controlador de BD
+        error: errorMessage
+    });
 });
 
 
@@ -145,24 +153,24 @@ app.get('/carrito', async (req, res) => {
 // ====================================================================
 
 async function startServer() {
-    await testConnection(); // Intenta conectar a la BD
-    
-    app.listen(PORT, () => {
-        console.log(`🚀 Servidor Express iniciado en el puerto ${PORT}`);
-        console.log(`🌐 Accede a la aplicación en http://localhost:${PORT}`);
-    });
+    await testConnection(); // Intenta conectar a la BD
+
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor Express iniciado en el puerto ${PORT}`);
+        console.log(`🌐 Accede a la aplicación en http://localhost:${PORT}`);
+    });
 }
 
 startServer();
 
 // --- Manejo de errores 404 (JSON vs HTML) ---
 app.use((req, res) => {
-    // Verifica si la solicitud acepta JSON (típico de una llamada API)
-    if (req.accepts('json')) {
-        // Si es una llamada API, devuelve un JSON de error 404
-        return res.status(404).json({ success: false, message: 'Ruta API no encontrada' });
-    }
+    // Verifica si la solicitud acepta JSON (típico de una llamada API)
+    if (req.accepts('json')) {
+        // Si es una llamada API, devuelve un JSON de error 404
+        return res.status(404).json({ success: false, message: 'Ruta API no encontrada' });
+    }
 
-    // Si acepta HTML (típico de navegar a una URL), devuelve la vista 404
-    res.status(404).render('404', { title: 'Página no encontrada' });
+    // Si acepta HTML (típico de navegar a una URL), devuelve la vista 404
+    res.status(404).render('404', { title: 'Página no encontrada' });
 });

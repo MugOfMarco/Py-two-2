@@ -90,10 +90,15 @@ export async function iniciarSesion(req, res) {
 
         // 4. Respuesta exitosa
         res.status(200).json({
-            message: 'Inicio de sesión exitoso.',
-            token: token,
-            nombre_usuario: usuario.nombre
-        });
+    success: true, // Añadimos esto para facilitar validación en frontend
+    message: 'Inicio de sesión exitoso.',
+    token: token,
+    user: {
+        id_usuario: usuario.id_usuario, // 🚨 ESTO ES LO QUE FALTABA
+        nombre: usuario.nombre,
+        email: usuario.email
+    }
+});
 
     } catch (error) {
         console.error('Error al iniciar sesión:', error);

@@ -3,9 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (loginForm) {
         loginForm.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Evita la recarga de la página
+            event.preventDefault(); 
             
-            // 1. Validar campos del lado del cliente antes de enviar
             if (!validarLogin()) {
                 return;
             }
@@ -14,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/api/usuarios/login', {
+                // 🚨 CORRECCIÓN 1: Cambiamos /usuarios/ por /users/
+                const response = await fetch('/api/users/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -25,11 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // ÉXITO: GUARDAR EL TOKEN y REDIRIGIR
+                    // ÉXITO: GUARDAR EL TOKEN
                     localStorage.setItem('userToken', data.token);
+
+                    // 🚨 CORRECCIÓN 2: GUARDAR EL ID DEL USUARIO PARA EL CARRITO
+                    // Nota: Asegúrate de que tu backend envíe 'id_usuario' dentro del objeto 'user'
+                    if (data.user && data.user.id_usuario) {
+                        localStorage.setItem('userId', data.user.id_usuario);
+                    }
+
                     console.log("Inicio de sesión exitoso. Redirigiendo...");
                     alert('✅ Inicio de sesión exitoso. ¡Bienvenido!');
-                    window.location.href = '/main'; // Redirigir a la página principal
+                    window.location.href = '/main'; 
 
                 } else {
                     alert('❌ Error: ' + data.message);
@@ -41,10 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =======================================================
-    // --- LÓGICA DE VALIDACIÓN DEL CLIENTE (COPIADA DE VALIDACION.JS) ---
-    // =======================================================
-
+    // --- LÓGICA DE VALIDACIÓN (Se mantiene igual) ---
     function validarLogin() {
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -75,13 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function mostrarError(inputElement, mensaje) {
         inputElement.classList.add('input-validation-error');
-        
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = mensaje;
-
         const formGroup = inputElement.closest('.form-group');
-        
         const existingError = formGroup.querySelector('.error-message');
         if (existingError) {
             existingError.textContent = mensaje;

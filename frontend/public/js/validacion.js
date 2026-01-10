@@ -122,13 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('⚙️ Datos de formulario a enviar:', data);
 
         try {
-            const response = await fetch('/api/usuarios/registro', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
+        // ✅ Cambiamos /usuarios/ por /users/ para que coincida con tu Backend
+        const response = await fetch('/api/users/registro', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
 
             console.log(`📡 Respuesta recibida. Status: ${response.status}`);
             const responseData = await response.json();

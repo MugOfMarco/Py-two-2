@@ -1,294 +1,112 @@
-// backend/controllers/carritocontroller.js
+import { pool } from '../config/dbconfig.js';
 
-import { pool } from '../config/dbconfig.js'; // 👈 Asegúrate que esta ruta es correcta
-
-// ====================================================================
-// 1. FUNCIONES INTERNAS DE UTILIDAD
-// ====================================================================
-
-/**
- * Asegura que exista un carrito para el usuario. Si no existe, lo crea.
- * @param {number} id_usuario El ID del usuario.
- * @param {object} connection La conexión de pool activa (para transacciones).
- * @returns {Promise<number>} El ID del carrito existente o recién creado.
- */
 async function getOrCreateCartId(id_usuario, connection) {
-    let [result] = await connection.query(
-        'SELECT id_carrito FROM carritos WHERE id_usuario = ?',
-        [id_usuario]
-    );
-
-    if (result.length > 0) {
-        return result[0].id_carrito;
-    }
-
-    // Si no existe, crear uno
-    [result] = await connection.query(
-        'INSERT INTO carritos (id_usuario) VALUES (?)',
-        [id_usuario]
-    );
-    return result.insertId;
+    let [result] = await connection.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [id_usuario]);
+    if (result.length > 0) return result[0].id_carrito;
+    [result] = await connection.query('INSERT INTO carritos (id_usuario) VALUES (?)', [id_usuario]);
+    return result.insertId;
 }
 
-/**
- * Obtiene los detalles de un producto por su ID usando una conexión específica.
- * @param {number} id_producto El ID del producto.
- * @param {object} connection La conexión de pool activa (para transacciones).
- * @returns {Promise<object | null>} Los detalles del producto o null si no existe.
- */
 async function getProductDetails(id_producto, connection) {
-    const [result] = await connection.query( 
-        'SELECT precio, stock FROM productos WHERE id_producto = ?',
-        [id_producto]
-    );
-    return result.length > 0 ? result[0] : null;
+    const [result] = await connection.query('SELECT precio, stock FROM productos WHERE id_producto = ?', [id_producto]);
+    return result.length > 0 ? result[0] : null;
 }
 
-
-// ====================================================================
-// 2. OBTENER CARRITO (GET)
-// ====================================================================
-
-/**
- * Obtiene todos los ítems del carrito para un usuario específico.
- * Incluye el total de ítems.
- * RUTA: GET /api/carrito/usuario/:userId
- */
 export async function getCart(req, res) {
-    const id_usuario = parseInt(req.params.userId);
-
-    if (isNaN(id_usuario)) {
-        return res.status(400).json({ success: false, message: 'ID de usuario inválido.' });
-    }
-
-    try {
-        const query = `
-            SELECT 
-                ic.id_item, 
-                ic.id_producto, 
-                ic.cantidad, 
-                ic.precio_unitario,
-                p.nombre, 
-                p.descripcion, 
-                p.categoria,
-                p.imagen_url
-            FROM items_carrito ic
-            JOIN carritos c ON ic.id_carrito = c.id_carrito
-            JOIN productos p ON ic.id_producto = p.id_producto
-            WHERE c.id_usuario = ?
-            ORDER BY ic.id_item DESC;
-        `;
-        
-        const [items] = await pool.query(query, [id_usuario]);
-        
-        const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
-
-        res.status(200).json({ 
-            success: true, 
-            data: items,
-            totalItems: totalItems
-        });
-
-    } catch (error) {
-        console.error('Error al obtener el carrito:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error interno del servidor al obtener el carrito.' 
-        });
-    }
+    const id_usuario = parseInt(req.params.userId);
+    if (isNaN(id_usuario)) return res.status(400).json({ success: false, message: 'ID de usuario inválido.' });
+    try {
+        const query = `
+            SELECT ic.id_item, ic.id_producto, ic.cantidad, ic.precio_unitario, p.nombre, p.descripcion
+            FROM items_carrito ic
+            JOIN carritos c ON ic.id_carrito = c.id_carrito
+            JOIN productos p ON ic.id_producto = p.id_producto
+            WHERE c.id_usuario = ?
+            ORDER BY ic.id_item DESC;`;
+        const [items] = await pool.query(query, [id_usuario]);
+        const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
+        res.status(200).json({ success: true, data: items, totalItems });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
 }
 
-
-// ====================================================================
-// 3. AÑADIR/ACTUALIZAR ÍTEM (POST)
-// ====================================================================
-
-/**
- * Agrega o actualiza la cantidad de un producto en el carrito, usando transacciones.
- * RUTA: POST /api/carrito/add
- */
 export async function addOrUpdateCartItem(req, res) {
-    const { userId, productId, quantity } = req.body;
-    
-    // Validaciones básicas
-    if (!userId || !productId || !quantity || isNaN(quantity) || quantity <= 0) {
-        return res.status(400).json({ success: false, message: 'Datos incompletos o inválidos (userId, productId, quantity).' });
-    }
-    
-    const id_usuario = parseInt(userId);
-    const id_producto = parseInt(productId);
-    const cantidad = parseInt(quantity);
-    
-    const connection = await pool.getConnection();
+    const { id_usuario, id_producto, cantidad } = req.body;
+    if (!id_usuario || !id_producto || !cantidad) {
+        return res.status(400).json({ success: false, message: 'Datos incompletos.' });
+    }
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const id_carrito = await getOrCreateCartId(id_usuario, connection);
+        const product = await getProductDetails(id_producto, connection);
+        if (!product) throw new Error('Producto no encontrado.');
+        if (product.stock < cantidad) throw new Error('Stock insuficiente.');
 
-    try {
-        await connection.beginTransaction();
+        const [existing] = await connection.query(
+            'SELECT id_item, cantidad FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
+            [id_carrito, id_producto]
+        );
 
-        // 1. Obtener ID del carrito o crearlo
-        const id_carrito = await getOrCreateCartId(id_usuario, connection);
-
-        // 2. Obtener detalles del producto y verificar stock (usando la conexión transaccional)
-        const product = await getProductDetails(id_producto, connection); // 👈 Usa la conexión transaccional
-
-        if (!product) {
-            throw new Error(`Producto con ID ${id_producto} no encontrado.`);
-        }
-        if (product.stock < cantidad) {
-            throw new Error(`Stock insuficiente. Solo quedan ${product.stock} unidades.`);
-        }
-
-        // 3. Verificar si el ítem ya existe en el carrito
-        const [existingItem] = await connection.query(
-            'SELECT id_item, cantidad FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
-            [id_carrito, id_producto]
-        );
-
-        const precio_unitario = product.precio;
-        let message;
-
-        if (existingItem.length > 0) {
-            // Si existe, actualizar la cantidad
-            await connection.query(
-                'UPDATE items_carrito SET cantidad = ?, precio_unitario = ? WHERE id_item = ?',
-                [cantidad, precio_unitario, existingItem[0].id_item]
-            );
-            message = `Cantidad del producto ${id_producto} actualizada a ${cantidad}.`;
-
-        } else {
-            // Si no existe, insertarlo
-            await connection.query(
-                'INSERT INTO items_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
-                [id_carrito, id_producto, cantidad, precio_unitario]
-            );
-            message = `Producto ${id_producto} agregado al carrito.`;
-        }
-        
-        // 4. Actualizar la fecha de modificación del carrito
-        await connection.query('UPDATE carritos SET fecha_actualizacion = NOW() WHERE id_carrito = ?', [id_carrito]);
-
-        await connection.commit();
-        res.status(200).json({ success: true, message: message });
-
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error al añadir/actualizar ítem:', error.message);
-        
-        const statusCode = error.message.includes('Stock insuficiente') || error.message.includes('no encontrado') ? 409 : 500;
-        
-        res.status(statusCode).json({ 
-            success: false, 
-            message: error.message 
-        });
-
-    } finally {
-        connection.release();
-    }
+        if (existing.length > 0) {
+            await connection.query(
+                'UPDATE items_carrito SET cantidad = cantidad + ?, precio_unitario = ? WHERE id_item = ?',
+                [cantidad, product.precio, existing[0].id_item]
+            );
+        } else {
+            await connection.query(
+                'INSERT INTO items_carrito (id_carrito, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
+                [id_carrito, id_producto, cantidad, product.precio]
+            );
+        }
+        await connection.commit();
+        res.status(200).json({ success: true, message: 'Carrito actualizado' });
+    } catch (error) {
+        await connection.rollback();
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
+    }
 }
 
-// ====================================================================
-// 4. ELIMINAR ÍTEMS (DELETE)
-// ====================================================================
-
-/**
- * Elimina un producto específico del carrito, usando transacciones.
- * RUTA: DELETE /api/carrito/item/:productId
- */
+// --- ELIMINAR UN PRODUCTO DEL CARRITO ---
 export async function removeItemFromCart(req, res) {
-    // ⚠️ Recordatorio de seguridad: id_usuario DEBE OBTENERSE DE req.user o la sesión
-    const id_usuario = 1; // TEMPORAL
+    const id_producto = parseInt(req.params.productId);
+    // En un sistema real, el id_usuario vendría del token JWT (req.user.id)
+    const id_usuario = req.body.id_usuario; 
 
-    const id_producto = parseInt(req.params.productId);
-
-    if (isNaN(id_producto)) {
-        return res.status(400).json({ success: false, message: 'ID de producto inválido.' });
-    }
-
-    const connection = await pool.getConnection();
-    
-    try {
-        await connection.beginTransaction();
-        
-        // 1. Obtener el ID del carrito
-        const [cartResult] = await connection.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [id_usuario]);
-        if (cartResult.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ success: false, message: 'Carrito no encontrado para el usuario.' });
-        }
-        const id_carrito = cartResult[0].id_carrito;
-        
-        // 2. Eliminar el ítem
-        const [deleteResult] = await connection.query(
-            'DELETE FROM items_carrito WHERE id_carrito = ? AND id_producto = ?',
-            [id_carrito, id_producto]
-        );
-        
-        if (deleteResult.affectedRows === 0) {
-            await connection.rollback();
-            return res.status(404).json({ success: false, message: 'El producto no se encontraba en el carrito.' });
-        }
-
-        // 3. Actualizar la fecha de modificación del carrito
-        await connection.query('UPDATE carritos SET fecha_actualizacion = NOW() WHERE id_carrito = ?', [id_carrito]);
-
-        await connection.commit();
-        res.status(200).json({ success: true, message: `Producto ${id_producto} eliminado del carrito.` });
-
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error al eliminar ítem:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error interno del servidor al eliminar el ítem.' 
-        });
-    } finally {
-        connection.release();
-    }
+    const connection = await pool.getConnection();
+    try {
+        const [cart] = await connection.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [id_usuario]);
+        if (cart.length > 0) {
+            await connection.query('DELETE FROM items_carrito WHERE id_carrito = ? AND id_producto = ?', [cart[0].id_carrito, id_producto]);
+            res.status(200).json({ success: true, message: 'Producto eliminado.' });
+        } else {
+            res.status(404).json({ success: false, message: 'Carrito no encontrado.' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
+    }
 }
 
-/**
- * Vacía todo el carrito de un usuario.
- * RUTA: DELETE /api/carrito/usuario/:userId
- */
+// --- VACÍAR TODO EL CARRITO ---
 export async function clearUserCart(req, res) {
-    const id_usuario = parseInt(req.params.userId);
-
-    if (isNaN(id_usuario)) {
-        return res.status(400).json({ success: false, message: 'ID de usuario inválido.' });
-    }
-
-    const connection = await pool.getConnection();
-
-    try {
-        await connection.beginTransaction();
-
-        // 1. Obtener el ID del carrito
-        const [cartResult] = await connection.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [id_usuario]);
-        if (cartResult.length === 0) {
-            await connection.rollback(); 
-            return res.status(200).json({ success: true, message: 'El carrito ya estaba vacío o no existía.' });
-        }
-        const id_carrito = cartResult[0].id_carrito;
-        
-        // 2. Eliminar todos los ítems
-        const [deleteResult] = await connection.query(
-            'DELETE FROM items_carrito WHERE id_carrito = ?',
-            [id_carrito]
-        );
-        
-        // 3. Actualizar la fecha de modificación del carrito
-        await connection.query('UPDATE carritos SET fecha_actualizacion = NOW() WHERE id_carrito = ?', [id_carrito]);
-
-        await connection.commit();
-        res.status(200).json({ success: true, message: `Carrito del usuario ${id_usuario} vaciado. ${deleteResult.affectedRows} ítems eliminados.` });
-        
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error al vaciar el carrito:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error interno del servidor al vaciar el carrito.' 
-        });
-    } finally {
-        connection.release();
-    }
+    const id_usuario = parseInt(req.params.userId);
+    const connection = await pool.getConnection();
+    try {
+        const [cart] = await connection.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [id_usuario]);
+        if (cart.length > 0) {
+            await connection.query('DELETE FROM items_carrito WHERE id_carrito = ?', [cart[0].id_carrito]);
+            res.status(200).json({ success: true, message: 'Carrito vaciado.' });
+        } else {
+            res.status(404).json({ success: false, message: 'Carrito no encontrado.' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
+    }
 }
