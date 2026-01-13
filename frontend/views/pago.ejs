@@ -1,0 +1,49 @@
+<main class="checkout-container">
+    <div class="checkout-grid">
+        <div class="checkout-summary card">
+            <h2>Resumen de Compra</h2>
+            <div id="lista-resumen">
+                </div>
+            <hr>
+            <div class="total-row">
+                <span>Total a pagar:</span>
+                <strong id="monto-total">$0.00</strong>
+            </div>
+        </div>
+
+        <div class="payment-methods card">
+            <h2>Método de Pago</h2>
+            <form id="paymentForm">
+                <div class="method-options">
+                    <label class="method-option">
+                        <input type="radio" name="metodo" value="tarjeta" checked>
+                        <span>Tarjeta de Crédito/Débito</span>
+                    </label>
+                    <label class="method-option">
+                        <input type="radio" name="metodo" value="transferencia">
+                        <span>Transferencia SPEI</span>
+                    </label>
+                </div>
+
+                <div id="card-fields" class="payment-details">
+                    <div class="form-group">
+                        <label>Número de Tarjeta</label>
+                        <input type="text" placeholder="0000 0000 0000 0000" maxlength="16" class="input-numeros" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expira (MM/AA)</label>
+                            <input type="text" placeholder="MM/AA" maxlength="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CVC</label>
+                            <input type="password" placeholder="123" maxlength="3" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-pay">Confirmar y Pagar</button>
+            </form>
+        </div>
+    </div>
+</main>
