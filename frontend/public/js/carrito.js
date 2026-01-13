@@ -262,7 +262,7 @@ window.clearCart = async function() {
  */
 window.checkout = function() {
     alert('Función de pago (checkout) no implementada. Redireccionando a la página principal.');
-    window.location.href = '/';
+    window.location.href = '/main';
 }
 
 
