@@ -113,52 +113,66 @@ window.changeQuantity = async function(productId, delta) {
     const input = itemElement ? itemElement.querySelector('input[type="number"]') : null;
     if (!input) return;
 
-    let newQuantity = delta === 1 ? 1 : -1; // Usamos delta para enviar al controlador
+    let currentQuantity = parseInt(input.value);
+    let newQuantity = currentQuantity + delta;
 
+    if (newQuantity < 1) {
+        if (confirm('¿Desea eliminar este producto del carrito?')) {
+            removeItem(productId);
+        }
+        return; 
+    }
+    
+    // Llamar al endpoint de actualización (POST /api/carrito)
     try {
-        // ✅ CORRECCIÓN: Ajustamos los nombres de campos (id_usuario, id_producto, cantidad)
-        const response = await fetch(`${API_BASE_URL}/add`, {
+        const response = await fetch(API_BASE_URL, {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                id_usuario: userId, 
-                id_producto: productId, 
-                cantidad: newQuantity 
+                userId: USER_ID, 
+                productId: productId, 
+                quantity: newQuantity 
             }),
         });
 
         const result = await response.json();
-        if (result.success) {
-            loadCart(); 
+
+        if (response.ok && result.success) {
+            loadCart(); // Recargar el carrito para mostrar los nuevos totales
+        } else {
+            alert(`Error al actualizar la cantidad: ${result.message}`);
+            // Recargar para restaurar la cantidad correcta si hay un error (ej: stock)
+            loadCart();
         }
     } catch (error) {
-        console.error('Error al actualizar cantidad:', error);
+        console.error('Error de conexión al actualizar la cantidad:', error);
+        alert('Error de conexión. Inténtalo más tarde.');
     }
 }
+
 
 window.removeItem = async function(productId) {
     if (!confirm('¿Eliminar producto?')) return;
     
     try {
-        // ✅ CORRECCIÓN: Enviamos el userId para validar la eliminación
-        const response = await fetch(`${API_BASE_URL}/item/${productId}`, {
+        // Se asume que el backend usa el USER_ID codificado para la sesión
+        const response = await fetch(`${API_BASE_URL}/item/${productId}?userId=${USER_ID}`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_usuario: getUserId() })
         });
 
         const result = await response.json();
         if (result.success) loadCart();
     } catch (error) {
-        console.error('Error al eliminar:', error);
+        console.error('Error de conexión al eliminar el ítem:', error);
+        alert('Error de conexión. Inténtalo más tarde.');
     }
 }
 
-// ✅ CORRECCIÓN: Ahora redirige a la página de pago real
-window.checkout = function() {
-    const totalText = document.getElementById('total-amount').textContent;
-    if (totalText === '$0.00') {
-        alert("Tu carrito está vacío.");
+/**
+ * Vacía todo el carrito del usuario.
+ */
+window.clearCart = async function() {
+    if (!confirm('¿Estás seguro de que deseas vaciar todo el carrito? Esta acción es irreversible.')) {
         return;
     }
     window.location.href = '/pago';
