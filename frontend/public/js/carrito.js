@@ -172,31 +172,27 @@ window.changeQuantity = async function(productId, delta) {
     
     // Llamar al endpoint de actualización (POST /api/carrito)
     try {
-        const response = await fetch(API_BASE_URL, {
+        const response = await fetch(`${API_BASE_URL}/add`, {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                userId: USER_ID, 
-                productId: productId, 
-                quantity: newQuantity 
+                id_usuario: USER_ID,   // Antes: userId
+                id_producto: productId, // Antes: productId
+                cantidad: delta         // OJO: tu backend usa 'cantidad' para sumar
             }),
         });
 
         const result = await response.json();
-
         if (response.ok && result.success) {
-            loadCart(); // Recargar el carrito para mostrar los nuevos totales
-        } else {
-            alert(`Error al actualizar la cantidad: ${result.message}`);
-            // Recargar para restaurar la cantidad correcta si hay un error (ej: stock)
             loadCart();
+        } else {
+            alert(result.message);
         }
-
     } catch (error) {
-        console.error('Error de conexión al actualizar la cantidad:', error);
-        alert('Error de conexión. Inténtalo más tarde.');
+        console.error('Error:', error);
     }
 }
+
 
 
 /**
@@ -204,28 +200,19 @@ window.changeQuantity = async function(productId, delta) {
  * @param {number} productId - ID del producto a eliminar.
  */
 window.removeItem = async function(productId) {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
-        return;
-    }
+    if (!confirm('¿Eliminar producto?')) return;
     
     try {
-        // Se asume que el backend usa el USER_ID codificado para la sesión
-        const response = await fetch(`${API_BASE_URL}/item/${productId}?userId=${USER_ID}`, {
+        const response = await fetch(`${API_BASE_URL}/item/${productId}`, {
             method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_usuario: USER_ID }) 
         });
 
         const result = await response.json();
-
-        if (response.ok && result.success) {
-            alert('Producto eliminado correctamente.');
-            loadCart(); // Recargar el carrito
-        } else {
-            alert(`Error al eliminar el producto: ${result.message}`);
-        }
-
+        if (result.success) loadCart();
     } catch (error) {
-        console.error('Error de conexión al eliminar el ítem:', error);
-        alert('Error de conexión. Inténtalo más tarde.');
+        console.error('Error:', error);
     }
 }
 
