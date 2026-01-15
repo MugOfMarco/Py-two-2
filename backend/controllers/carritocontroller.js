@@ -4,18 +4,28 @@ import { pool } from '../config/dbconfig.js';
 // 1. OBTENER CARRITO (getCart)
 // ==========================================
 export const getCart = async (req, res) => {
-    // Nota: Tu ruta usa :userId, así que lo leemos así
-    const { userId } = req.params; 
+    // 1. INTENTAMOS OBTENER EL ID DESDE EL TOKEN (req.user)
+    // Si no existe (porque no usamos middleware en esta ruta), usamos params.
+    let userId = null;
+
+    if (req.user && req.user.id) {
+        userId = req.user.id; // ID seguro del token
+    } else {
+        userId = req.params.userId; // Fallback a URL
+    }
+
+    if (!userId || userId === 'undefined') {
+        return res.status(400).json({ success: false, message: "ID de usuario no válido" });
+    }
 
     try {
-        // 1. Asegurar que existe el carrito
+        // Validar si existe carrito, si no, crear
         const [carritoExistente] = await pool.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [userId]);
         
         if (carritoExistente.length === 0) {
             await pool.query('INSERT INTO carritos (id_usuario) VALUES (?)', [userId]);
         }
 
-        // 2. Traer productos
         const query = `
             SELECT 
                 ic.id_producto, 
@@ -31,16 +41,10 @@ export const getCart = async (req, res) => {
 
         const [items] = await pool.query(query, [userId]);
 
-        // Calcular totales
         const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0);
         const totalPrecio = items.reduce((sum, item) => sum + parseFloat(item.total), 0);
 
-        res.json({ 
-            success: true, 
-            data: items, 
-            totalItems, 
-            totalPrecio 
-        });
+        res.json({ success: true, data: items, totalItems, totalPrecio });
 
     } catch (error) {
         console.error("Error en getCart:", error);
@@ -49,14 +53,29 @@ export const getCart = async (req, res) => {
 };
 
 // ==========================================
-// 2. AÑADIR O ACTUALIZAR (addOrUpdateCartItem)
+// 2. AÑADIR O ACTUALIZAR (addOrUpdateCartItem) -> AQUÍ FALLABA
 // ==========================================
 export const addOrUpdateCartItem = async (req, res) => {
-    // Tu ruta espera userId en el body para este POST
-    const { id_usuario, id_producto, cantidad } = req.body; 
+    const { id_producto, cantidad } = req.body; 
     
-    // A veces el frontend manda 'userId' o 'id_usuario', aseguramos cual llega
-    const usuarioFinal = id_usuario || req.body.userId;
+    // 🚨 CORRECCIÓN CLAVE:
+    // Priorizamos el ID que viene del TOKEN (req.user.id).
+    // Si no hay token, buscamos en el body.
+    let usuarioFinal = null;
+
+    if (req.user && req.user.id) {
+        usuarioFinal = req.user.id;
+    } else {
+        // Soporte para body.id_usuario o body.userId
+        usuarioFinal = req.body.id_usuario || req.body.userId;
+    }
+
+    // Validación extra: Si sigue siendo undefined, detenemos todo
+    if (!usuarioFinal || usuarioFinal === 'undefined') {
+        console.error("Intento de agregar al carrito sin ID de usuario válido.");
+        return res.status(400).json({ success: false, message: "No se identificó al usuario." });
+    }
+
     const cantidadNumerica = parseInt(cantidad) || 1;
 
     try {
@@ -100,7 +119,7 @@ export const addOrUpdateCartItem = async (req, res) => {
 
     } catch (error) {
         console.error("Error en addOrUpdateCartItem:", error);
-        res.status(500).json({ success: false, message: "Error al actualizar carrito" });
+        res.status(500).json({ success: false, message: "Error al actualizar carrito: " + error.message });
     }
 };
 
@@ -108,9 +127,17 @@ export const addOrUpdateCartItem = async (req, res) => {
 // 3. ELIMINAR ÍTEM (removeItemFromCart)
 // ==========================================
 export const removeItemFromCart = async (req, res) => {
-    const { productId } = req.params; // Tu ruta usa :productId
-    const { id_usuario, userId } = req.body; // Puede venir uno u otro
-    const usuarioFinal = id_usuario || userId;
+    const { productId } = req.params;
+    
+    // Lo mismo: Buscar ID en Token primero
+    let usuarioFinal = null;
+    if (req.user && req.user.id) {
+        usuarioFinal = req.user.id;
+    } else {
+        usuarioFinal = req.body.id_usuario || req.body.userId;
+    }
+
+    if (!usuarioFinal) return res.status(400).json({ success: false, message: "Usuario no identificado" });
 
     try {
         const [carrito] = await pool.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [usuarioFinal]);
@@ -133,7 +160,15 @@ export const removeItemFromCart = async (req, res) => {
 // 4. VACIAR CARRITO (clearUserCart)
 // ==========================================
 export const clearUserCart = async (req, res) => {
-    const { userId } = req.params; // Tu ruta usa :userId
+    // Buscar ID en Token primero
+    let userId = null;
+    if (req.user && req.user.id) {
+        userId = req.user.id;
+    } else {
+        userId = req.params.userId;
+    }
+
+    if (!userId) return res.status(400).json({ success: false, message: "Usuario no identificado" });
 
     try {
         const [carrito] = await pool.query('SELECT id_carrito FROM carritos WHERE id_usuario = ?', [userId]);

@@ -1,42 +1,41 @@
-const loginForm = document.getElementById('login-form');
+// 1. Verificamos carga
+console.log("Script login.js cargado.");
 
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Evita que la página se recargue sola
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login-form');
 
-        // 1. Obtener datos limpios
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-        if (!email || !password) {
-            return alert("Por favor completa todos los campos.");
-        }
+            if (!email || !password) return alert("Completa los campos");
 
-        try {
-            // 2. Conectar con el Backend
-            const response = await fetch('/api/usuarios/login', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+            try {
+                // 🚨 CAMBIO AQUÍ: Usamos '/api/users/login' para coincidir con tu server.js original
+                const response = await fetch('/api/users/login', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
+                console.log("Respuesta:", data);
 
-            // 3. Manejar respuesta
-            if (data.success) {
-                // ✅ GUARDAR TOKEN (Lo más importante)
-                localStorage.setItem('userToken', data.token);
-                localStorage.setItem('userId', data.id_usuario);
-                
-                // Redirigir
-                window.location.href = '/main'; 
-            } else {
-                // ❌ Error (Usuario no existe o contraseña mal)
-                alert(data.message || 'Error al iniciar sesión');
+                if (data.success) {
+                    localStorage.setItem('userToken', data.token);
+                    localStorage.setItem('userId', data.id_usuario);
+                    alert('¡Bienvenido!');
+                    window.location.href = '/main'; 
+                } else {
+                    alert('Error: ' + (data.message || 'Credenciales incorrectas'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión con el servidor.');
             }
-        } catch (error) {
-            console.error('Error de red:', error);
-            alert('El servidor no responde. Intenta más tarde.');
-        }
-    });
-}
+        });
+    }
+});

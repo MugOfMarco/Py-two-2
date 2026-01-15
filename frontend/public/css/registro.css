@@ -835,3 +835,15 @@ input:focus, select:focus {
     margin-top: 5px;
     padding-left: 2px;
 }
+
+/* Estilo para cuando la validación falla */
+.input-validation-error {
+    border: 2px solid #ff4d4d !important; /* Borde rojo */
+    background-color: #fff0f0; /* Fondo rosita leve */
+}
+
+.error-message {
+    color: #ff4d4d;
+    font-size: 0.85rem;
+    font-weight: bold;
+}

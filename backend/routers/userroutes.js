@@ -1,19 +1,15 @@
-import express from 'express';
-// Importamos las funciones del controlador
-import { registrarUsuario, iniciarSesion } from '../controllers/usercontroller.js'; 
+import { Router } from 'express';
 
-const router = express.Router();
+// 🚨 CORRECCIÓN AQUÍ: 
+// Importamos 'login' (que es como se llama ahora en el controlador)
+import { registrarUsuario, login } from '../controllers/usercontroller.js'; 
 
-/**
- * @route POST /api/usuarios/registro
- * @description Ruta para crear un nuevo usuario.
- */
-router.post('/registro', registrarUsuario);
+const router = Router();
 
-/**
- * @route POST /api/usuarios/login
- * @description Ruta para autenticar al usuario y recibir el token JWT.
- */
-router.post('/login', iniciarSesion);
+// Ruta para registrarse
+router.post('/register', registrarUsuario); // Ojo: verifica si en tu frontend llamas a /register o /registro
+
+// Ruta para iniciar sesión
+router.post('/login', login);
 
 export default router;
