@@ -1,50 +1,141 @@
-<link rel="stylesheet" href="/css/pago.css">
-<main class="checkout-container">
-    <div class="checkout-grid">
-        <div class="checkout-summary card">
-            <h2>Resumen de Compra</h2>
-            <div id="lista-resumen">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - π two 2 - Sex Shop Premium</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/pago.css">
+</head>
+<body>
+    
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/main">
+                        <h1>π two 2</h1>
+                        <span class="tagline">Tu bienestar íntimo</span>
+                    </a>
                 </div>
-            <hr>
-            <div class="total-row">
-                <span>Total a pagar:</span>
-                <strong id="monto-total">$0.00</strong>
+                
+                <form action="/main" method="GET" class="search-bar">
+                    <input type="text" name="q" placeholder="Buscar productos..." required>
+                    <button type="submit" class="search-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </form>
+                
+                <div class="header-icons">
+                    <a href="/perfil" class="icon-btn">
+                        <span>Cuenta</span>
+                    </a>
+                    
+                    <a href="/historial" class="icon-btn">
+                        <span>Pedidos</span>
+                    </a>
+
+                    <a href="/carrito" class="icon-btn cart-btn">
+                        <span class="cart-count">0</span>
+                        <span>Carrito</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="checkout-container">
+        
+        <div class="checkout-grid" id="seccion-formulario">
+            
+            <div class="checkout-summary card">
+                <h2>Resumen de Compra</h2>
+                <div id="lista-resumen">
+                    <p>Cargando productos...</p>
+                </div>
+                
+                <div class="total-row">
+                    <span>Total a pagar:</span>
+                    <strong id="monto-total">$0.00</strong>
+                </div>
+            </div>
+
+            <div class="payment-methods card">
+                <h2>Datos de Pago</h2>
+                <form id="paymentForm">
+                    <div class="method-options">
+                        <label class="method-option">
+                            <input type="radio" name="metodo" value="tarjeta" checked>
+                            <span>Tarjeta de Crédito/Débito</span>
+                        </label>
+                        <label class="method-option">
+                            <input type="radio" name="metodo" value="transferencia">
+                            <span>Transferencia SPEI</span>
+                        </label>
+                    </div>
+
+                    <div id="card-fields" class="payment-details">
+                        <div class="form-group">
+                            <label>Número de Tarjeta</label>
+                            <input type="text" placeholder="0000 0000 0000 0000" maxlength="19" class="input-numeros" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Expira (MM/AA)</label>
+                                <input type="text" placeholder="MM/AA" maxlength="5" required>
+                            </div>
+                            <div class="form-group">
+                                <label>CVC</label>
+                                <input type="password" placeholder="123" maxlength="3" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-pay">Confirmar y Pagar 🔒</button>
+                </form>
             </div>
         </div>
 
-        <div class="payment-methods card">
-            <h2>Método de Pago</h2>
-            <form id="paymentForm">
-                <div class="method-options">
-                    <label class="method-option">
-                        <input type="radio" name="metodo" value="tarjeta" checked>
-                        <span>Tarjeta de Crédito/Débito</span>
-                    </label>
-                    <label class="method-option">
-                        <input type="radio" name="metodo" value="transferencia">
-                        <span>Transferencia SPEI</span>
-                    </label>
-                </div>
+        <div id="seccion-ticket">
+            <div class="ticket-header">
+                <h3>π two 2</h3>
+                <p>Comprobante de Pago</p>
+                <p id="ticket-fecha" style="font-size: 0.8rem; color: #666;">--/--/--</p>
+                <p id="ticket-orden" style="font-weight: bold;">Orden #---</p>
+            </div>
 
-                <div id="card-fields" class="payment-details">
-                    <div class="form-group">
-                        <label>Número de Tarjeta</label>
-                        <input type="text" placeholder="0000 0000 0000 0000" maxlength="16" class="input-numeros" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Expira (MM/AA)</label>
-                            <input type="text" placeholder="MM/AA" maxlength="5" required>
-                        </div>
-                        <div class="form-group">
-                            <label>CVC</label>
-                            <input type="password" placeholder="123" maxlength="3" required>
-                        </div>
-                    </div>
+            <div id="ticket-items" class="ticket-body">
                 </div>
+            
+            <div class="ticket-total-row">
+                <span>TOTAL PAGADO:</span>
+                <span id="ticket-total">$0.00</span>
+            </div>
 
-                <button type="submit" class="btn-pay">Confirmar y Pagar</button>
-            </form>
+            <button class="ticket-btn" onclick="window.location.href='/historial'">
+                Ver en Mis Pedidos →
+            </button>
         </div>
-    </div>
-</main>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>π two 2</h3>
+                    <p>Tu tienda de confianza para el bienestar íntimo</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 π two 2. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/pago.js"></script>
+</body>
+</html>
