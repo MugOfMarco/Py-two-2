@@ -1,13 +1,18 @@
 import { Router } from 'express';
-// Importamos AMBAS funciones del controlador
+// 1. Importamos el controlador
 import { finalizarCompra, getHistorialUsuario } from '../controllers/pedidocontroller.js';
+
+// 2. Importamos al "Cadenero"
+import { verificarToken } from '../middleware/auth.js'; 
 
 const router = Router();
 
-// Ruta para hacer el pago (POST)
-router.post('/crear', finalizarCompra);
+// 3. Protegemos las rutas
 
-// Ruta para ver el historial (GET)
-router.get('/usuario/:id_usuario', getHistorialUsuario);
+// POST: Pagar (Crear pedido)
+router.post('/crear', verificarToken, finalizarCompra);
+
+// GET: Ver historial
+router.get('/usuario/:id_usuario', verificarToken, getHistorialUsuario);
 
 export default router;

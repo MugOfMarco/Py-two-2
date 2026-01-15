@@ -1,22 +1,22 @@
 /**
  * /frontend/public/js/carrito.js
- * Lógica reparada: Alineada con EJS y corrección de errores de redirección.
+ * Versión segura con TOKEN.
  */
 
 const API_BASE_URL = '/api/carrito'; 
-// Función para obtener el ID real. Si no hay, devuelve null.
+
+// Obtenemos ID y Token
 const getUserId = () => localStorage.getItem('userId');
+const getToken = () => localStorage.getItem('userToken'); // 🔐 CLAVE
 
 // ==========================================
-// 1. RENDERIZADO (DIBUJAR CARRITO)
+// 1. RENDERIZADO (Igual que antes)
 // ==========================================
-
 function renderCart(items, totalItems) {
     const cartItemsContainer = document.querySelector('.cart-items-list'); 
     const emptyCartElement = document.querySelector('.empty-cart');
     const cartHeader = document.querySelector('.cart-header');
     
-    // Elementos del resumen
     const itemsCountElement = document.getElementById('items-count');
     const subtotalElement = document.getElementById('subtotal');
     const ivaElement = document.getElementById('iva');
@@ -24,12 +24,10 @@ function renderCart(items, totalItems) {
 
     if (!cartItemsContainer) return;
 
-    // Caso: Carrito Vacío
     if (!items || items.length === 0) {
         if (emptyCartElement) emptyCartElement.style.display = 'block';
         if (cartHeader) cartHeader.style.display = 'none';
         cartItemsContainer.innerHTML = '';
-        
         if (totalAmountElement) {
             itemsCountElement.textContent = 0;
             subtotalElement.textContent = '$0.00';
@@ -39,7 +37,6 @@ function renderCart(items, totalItems) {
         return;
     }
 
-    // Caso: Carrito con Productos
     if (emptyCartElement) emptyCartElement.style.display = 'none';
     if (cartHeader) cartHeader.style.display = 'flex';
     cartItemsContainer.innerHTML = ''; 
@@ -55,7 +52,6 @@ function renderCart(items, totalItems) {
         itemElement.className = 'cart-item';
         itemElement.setAttribute('data-product-id', item.id_producto); 
         
-        // Usamos los botones con la función modificarCantidad
         itemElement.innerHTML = `
             <div class="item-details">
                 <div class="info">
@@ -76,7 +72,6 @@ function renderCart(items, totalItems) {
         cartItemsContainer.appendChild(itemElement);
     });
 
-    // Cálculos Finales
     const ivaRate = 0.16;
     const ivaAmount = subTotal * ivaRate;
     const grandTotal = subTotal + ivaAmount;
@@ -88,15 +83,23 @@ function renderCart(items, totalItems) {
 }
 
 // ==========================================
-// 2. LÓGICA DE INTERACCIÓN (GLOBAL)
+// 2. LÓGICA CON TOKEN
 // ==========================================
 
 async function loadCart() {
     const userId = getUserId();
-    if (!userId) return; 
+    const token = getToken();
+
+    if (!userId || !token) return; // Si no hay token, no cargamos nada
 
     try {
-        const response = await fetch(`${API_BASE_URL}/usuario/${userId}`);
+        const response = await fetch(`${API_BASE_URL}/usuario/${userId}`, {
+            method: 'GET',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token // 🔐 Enviamos el token
+            }
+        });
         const result = await response.json();
         
         if (result.success) {
@@ -110,57 +113,55 @@ async function loadCart() {
     }
 }
 
-// --- FUNCIONES QUE EL HTML LLAMA DIRECTAMENTE ---
-
-/**
- * Reemplaza a "changeQuantity". Usa los nombres de campos correctos (id_usuario).
- */
 window.modificarCantidad = async function(productId, delta) {
     const userId = getUserId();
-    if (!userId) return window.location.href = '/login';
+    const token = getToken();
+    
+    if (!userId || !token) return window.location.href = '/login';
 
-    // 1. Obtener cantidad actual del input para validar visualmente
+    // Validación visual rápida
     const itemElement = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
     const input = itemElement ? itemElement.querySelector('input') : null;
     if (input) {
         let currentQty = parseInt(input.value);
         if (currentQty + delta < 1) {
-            return eliminarProducto(productId); // Si baja de 1, preguntar si elimina
+            return eliminarProducto(productId);
         }
     }
 
     try {
-        // CORRECCIÓN: Usamos id_usuario e id_producto (BD en español)
         const response = await fetch(`${API_BASE_URL}/add`, {
             method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token // 🔐 Token
+            },
             body: JSON.stringify({ 
                 id_usuario: userId, 
                 id_producto: productId, 
-                cantidad: delta // Enviamos +1 o -1
+                cantidad: delta 
             }),
         });
 
         const result = await response.json();
-        if (result.success) {
-            loadCart(); 
-        }
+        if (result.success) loadCart(); 
     } catch (error) {
         console.error('Error:', error);
     }
 };
 
-/**
- * Reemplaza a "removeItem".
- */
 window.eliminarProducto = async function(productId) {
     if (!confirm('¿Eliminar este producto?')) return;
     const userId = getUserId();
+    const token = getToken();
     
     try {
         const response = await fetch(`${API_BASE_URL}/item/${productId}`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token // 🔐 Token
+            },
             body: JSON.stringify({ id_usuario: userId })
         });
         const result = await response.json();
@@ -170,36 +171,33 @@ window.eliminarProducto = async function(productId) {
     }
 };
 
-/**
- * Reemplaza a "clearCart". 
- * CORRECCIÓN: Ahora sí borra y NO redirige a pagar.
- */
 window.vaciarCarrito = async function() {
     if (!confirm('¿Estás seguro de vaciar TODO el carrito?')) return;
     const userId = getUserId();
+    const token = getToken();
 
     try {
         const response = await fetch(`${API_BASE_URL}/usuario/${userId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token // 🔐 Token
+            }
         });
         
         const result = await response.json();
-        if (result.success) {
-            loadCart(); // Solo recarga para mostrarlo vacío
-        }
+        if (result.success) loadCart();
     } catch (error) {
         console.error('Error vaciando carrito:', error);
     }
 };
 
-/**
- * Reemplaza a "checkout". 
- * Esta es la ÚNICA que debe llevar a /pago.
- */
 window.irAPagar = function() {
     const userId = getUserId();
-    if (!userId) {
-        alert("Inicia sesión para pagar.");
+    const token = getToken();
+
+    if (!userId || !token) {
+        alert("Tu sesión ha expirado. Por favor inicia sesión.");
         window.location.href = '/login';
         return;
     }
@@ -213,5 +211,4 @@ window.irAPagar = function() {
     window.location.href = '/pago';
 };
 
-// Inicializar
 document.addEventListener('DOMContentLoaded', loadCart);
