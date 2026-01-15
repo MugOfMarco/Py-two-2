@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - π two 2</title> 
-    <link rel="stylesheet" href="/css/carrito.css">
-    </head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - π two 2</title> 
+    <link rel="stylesheet" href="/css/carrito.css">
+</head>
 <body>
     <header class="header">
         <div class="container">
@@ -17,10 +17,9 @@
                     </a>
                 </div>
                 
-             
-                
                 <div class="header-icons">
-                    <a href="/login" class="icon-btn"><span>Cuenta</span></a>
+                    <a href="/perfil" class="icon-btn"><span>Cuenta</span></a>
+                    <a href="/historial" class="icon-btn"><span>Pedidos</span></a>
                     <a href="/carrito" class="icon-btn cart-btn active"> 
                         <span class="cart-count">0</span>
                         <span>Carrito</span>
@@ -29,8 +28,6 @@
             </div>
         </div>
     </header>
-
-    
 
     <section class="cart-banner">
         <div class="container">
@@ -46,11 +43,10 @@
                 <div class="cart-items">
                     <div class="cart-header" style="display: none;"> 
                         <h2>Productos en tu carrito (<span id="items-count">0</span>)</h2>
-                        <button class="clear-cart" onclick="clearCart()">Vaciar carrito</button>
+                        <button id="btn-vaciar" class="clear-cart" onclick="vaciarCarrito()">Vaciar carrito</button>
                     </div>
 
-                    <div class="cart-items-list">
-                        </div>
+                    <div class="cart-items-list"></div>
                     
                     <div class="empty-cart" style="display: none;">
                         <div class="empty-icon">🛒</div>
@@ -85,7 +81,7 @@
                         <span id="total-amount">$0.00</span> 
                     </div>
 
-                    <button class="btn-checkout" onclick="checkout()">
+                    <button id="btn-pagar" class="btn-checkout" onclick="irAPagar()">
                         Proceder al pago
                     </button>
 

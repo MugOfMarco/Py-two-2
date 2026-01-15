@@ -1,35 +1,36 @@
 /**
  * /frontend/public/js/carrito.js
- * Lógica integrada con el sistema de autenticación y pedidos.
+ * Lógica reparada: Alineada con EJS y corrección de errores de redirección.
  */
 
-// --- 1. Variables Dinámicas ---
 const API_BASE_URL = '/api/carrito'; 
-const IVA_RATE = 0.16; 
-
-// ✅ CORRECCIÓN: Obtener el ID real del usuario desde el navegador
+// Función para obtener el ID real. Si no hay, devuelve null.
 const getUserId = () => localStorage.getItem('userId');
-const getToken = () => localStorage.getItem('userToken');
 
-// --- 2. Renderizado del Carrito ---
+// ==========================================
+// 1. RENDERIZADO (DIBUJAR CARRITO)
+// ==========================================
 
 function renderCart(items, totalItems) {
     const cartItemsContainer = document.querySelector('.cart-items-list'); 
     const emptyCartElement = document.querySelector('.empty-cart');
     const cartHeader = document.querySelector('.cart-header');
     
+    // Elementos del resumen
     const itemsCountElement = document.getElementById('items-count');
     const subtotalElement = document.getElementById('subtotal');
     const ivaElement = document.getElementById('iva');
     const totalAmountElement = document.getElementById('total-amount');
 
-    if (!cartItemsContainer || !emptyCartElement) return;
+    if (!cartItemsContainer) return;
 
-    if (items.length === 0) {
-        emptyCartElement.style.display = 'block';
+    // Caso: Carrito Vacío
+    if (!items || items.length === 0) {
+        if (emptyCartElement) emptyCartElement.style.display = 'block';
         if (cartHeader) cartHeader.style.display = 'none';
         cartItemsContainer.innerHTML = '';
-        if (subtotalElement) {
+        
+        if (totalAmountElement) {
             itemsCountElement.textContent = 0;
             subtotalElement.textContent = '$0.00';
             ivaElement.textContent = '$0.00';
@@ -38,7 +39,8 @@ function renderCart(items, totalItems) {
         return;
     }
 
-    emptyCartElement.style.display = 'none';
+    // Caso: Carrito con Productos
+    if (emptyCartElement) emptyCartElement.style.display = 'none';
     if (cartHeader) cartHeader.style.display = 'flex';
     cartItemsContainer.innerHTML = ''; 
 
@@ -53,6 +55,7 @@ function renderCart(items, totalItems) {
         itemElement.className = 'cart-item';
         itemElement.setAttribute('data-product-id', item.id_producto); 
         
+        // Usamos los botones con la función modificarCantidad
         itemElement.innerHTML = `
             <div class="item-details">
                 <div class="info">
@@ -62,18 +65,20 @@ function renderCart(items, totalItems) {
             </div>
             <div class="item-controls">
                 <div class="quantity-input">
-                    <button onclick="changeQuantity(${item.id_producto}, -1)">-</button>
+                    <button type="button" onclick="modificarCantidad(${item.id_producto}, -1)">-</button>
                     <input type="number" value="${item.cantidad}" readonly style="width: 40px; text-align: center;">
-                    <button onclick="changeQuantity(${item.id_producto}, 1)">+</button>
+                    <button type="button" onclick="modificarCantidad(${item.id_producto}, 1)">+</button>
                 </div>
                 <div class="item-total">$${itemTotal.toFixed(2)}</div>
-                <button class="remove-item-btn" onclick="removeItem(${item.id_producto})">Eliminar</button>
+                <button class="remove-item-btn" onclick="eliminarProducto(${item.id_producto})">Eliminar</button>
             </div>
         `;
         cartItemsContainer.appendChild(itemElement);
     });
 
-    const ivaAmount = subTotal * IVA_RATE;
+    // Cálculos Finales
+    const ivaRate = 0.16;
+    const ivaAmount = subTotal * ivaRate;
     const grandTotal = subTotal + ivaAmount;
 
     if (itemsCountElement) itemsCountElement.textContent = totalItems;
@@ -82,14 +87,13 @@ function renderCart(items, totalItems) {
     if (totalAmountElement) totalAmountElement.textContent = `$${grandTotal.toFixed(2)}`;
 }
 
-// --- 3. Funciones de API ---
+// ==========================================
+// 2. LÓGICA DE INTERACCIÓN (GLOBAL)
+// ==========================================
 
 async function loadCart() {
     const userId = getUserId();
-    if (!userId) {
-        window.location.href = '/login';
-        return;
-    }
+    if (!userId) return; 
 
     try {
         const response = await fetch(`${API_BASE_URL}/usuario/${userId}`);
@@ -101,83 +105,113 @@ async function loadCart() {
             renderCart([], 0);
         }
     } catch (error) {
-        console.error('Error al cargar carrito:', error);
+        console.error('Error cargando carrito:', error);
         renderCart([], 0); 
     }
 }
-window.loadCart = loadCart;
 
-window.changeQuantity = async function(productId, delta) {
+// --- FUNCIONES QUE EL HTML LLAMA DIRECTAMENTE ---
+
+/**
+ * Reemplaza a "changeQuantity". Usa los nombres de campos correctos (id_usuario).
+ */
+window.modificarCantidad = async function(productId, delta) {
     const userId = getUserId();
+    if (!userId) return window.location.href = '/login';
+
+    // 1. Obtener cantidad actual del input para validar visualmente
     const itemElement = document.querySelector(`.cart-item[data-product-id="${productId}"]`);
-    const input = itemElement ? itemElement.querySelector('input[type="number"]') : null;
-    if (!input) return;
-
-    let currentQuantity = parseInt(input.value);
-    let newQuantity = currentQuantity + delta;
-
-    if (newQuantity < 1) {
-        if (confirm('¿Desea eliminar este producto del carrito?')) {
-            removeItem(productId);
+    const input = itemElement ? itemElement.querySelector('input') : null;
+    if (input) {
+        let currentQty = parseInt(input.value);
+        if (currentQty + delta < 1) {
+            return eliminarProducto(productId); // Si baja de 1, preguntar si elimina
         }
-        return; 
     }
-    
-    // Llamar al endpoint de actualización (POST /api/carrito)
+
     try {
-        const response = await fetch(API_BASE_URL, {
+        // CORRECCIÓN: Usamos id_usuario e id_producto (BD en español)
+        const response = await fetch(`${API_BASE_URL}/add`, {
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                userId: USER_ID, 
-                productId: productId, 
-                quantity: newQuantity 
+                id_usuario: userId, 
+                id_producto: productId, 
+                cantidad: delta // Enviamos +1 o -1
             }),
         });
 
         const result = await response.json();
-
-        if (response.ok && result.success) {
-            loadCart(); // Recargar el carrito para mostrar los nuevos totales
-        } else {
-            alert(`Error al actualizar la cantidad: ${result.message}`);
-            // Recargar para restaurar la cantidad correcta si hay un error (ej: stock)
-            loadCart();
+        if (result.success) {
+            loadCart(); 
         }
     } catch (error) {
-        console.error('Error de conexión al actualizar la cantidad:', error);
-        alert('Error de conexión. Inténtalo más tarde.');
+        console.error('Error:', error);
     }
-}
+};
 
-
-window.removeItem = async function(productId) {
-    if (!confirm('¿Eliminar producto?')) return;
+/**
+ * Reemplaza a "removeItem".
+ */
+window.eliminarProducto = async function(productId) {
+    if (!confirm('¿Eliminar este producto?')) return;
+    const userId = getUserId();
     
     try {
-        // Se asume que el backend usa el USER_ID codificado para la sesión
-        const response = await fetch(`${API_BASE_URL}/item/${productId}?userId=${USER_ID}`, {
+        const response = await fetch(`${API_BASE_URL}/item/${productId}`, {
             method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_usuario: userId })
         });
-
         const result = await response.json();
         if (result.success) loadCart();
     } catch (error) {
-        console.error('Error de conexión al eliminar el ítem:', error);
-        alert('Error de conexión. Inténtalo más tarde.');
+        console.error('Error:', error);
     }
-}
+};
 
 /**
- * Vacía todo el carrito del usuario.
+ * Reemplaza a "clearCart". 
+ * CORRECCIÓN: Ahora sí borra y NO redirige a pagar.
  */
-window.clearCart = async function() {
-    if (!confirm('¿Estás seguro de que deseas vaciar todo el carrito? Esta acción es irreversible.')) {
+window.vaciarCarrito = async function() {
+    if (!confirm('¿Estás seguro de vaciar TODO el carrito?')) return;
+    const userId = getUserId();
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/usuario/${userId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            loadCart(); // Solo recarga para mostrarlo vacío
+        }
+    } catch (error) {
+        console.error('Error vaciando carrito:', error);
+    }
+};
+
+/**
+ * Reemplaza a "checkout". 
+ * Esta es la ÚNICA que debe llevar a /pago.
+ */
+window.irAPagar = function() {
+    const userId = getUserId();
+    if (!userId) {
+        alert("Inicia sesión para pagar.");
+        window.location.href = '/login';
         return;
     }
-    window.location.href = '/pago';
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadCart();
-});
+    const totalText = document.getElementById('total-amount');
+    if (totalText && totalText.textContent === '$0.00') {
+        alert("Tu carrito está vacío.");
+        return;
+    }
+    
+    window.location.href = '/pago';
+};
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', loadCart);
