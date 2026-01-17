@@ -103,6 +103,12 @@ app.get('/historial', (req, res) => {
     res.render('historial', { title: 'Mis Compras Pasadas' });
 });
 
+// ...
+app.get('/perfil', (req, res) => {
+    res.render('perfil', { title: 'Mi Perfil' });
+});
+// ...
+
 // --- CATEGORÍAS ---
 app.get('/juguetes', (req, res) => { res.render('juguetes', { title: 'Juguetes' }); });
 app.get('/lenceria', (req, res) => { res.render('lenceria', { title: 'Lencería' }); });

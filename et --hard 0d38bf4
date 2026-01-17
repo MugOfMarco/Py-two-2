@@ -1,0 +1,34 @@
+[33m4f00a1c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Anado el js main y ejs
+[33m0d38bf4[m validacion pago
+[33m08294f0[m arreglo total del registro, incio de sesion, token etc.
+[33m1131d35[m intento de arreglo con token
+[33mfaedeeb[m historial de pedidos y compra
+[33m94539d5[m arreglo de bototnes de stock y redireccion correcta
+[33m3700750[m Merge branch 'main' of https://github.com/MugOfMarco/Py-two-2
+[33m9a94c91[m tMerge branch 'main' of https://github.com/MugOfMarco/Py-two-2 ghjk
+[33m620bdab[m Arreglar funcionalidad de botones
+[33mee466dd[m Anado css de pago
+[33m6099827[m historial de pedidos y pagina de pago
+[33ma6c70b0[m Merge branch 'main' of https://github.com/MugOfMarco/Py-two-2
+[33m3357055[m adicion de la pagina de pago mas no implementada
+[33mc7f9b1e[m Correción de redirección de rutas
+[33mbd3c990[m arreglo del carrito, main y mostrar productos
+[33m96f88c4[m funcionando el main mostrando productos en la bd
+[33m8781afc[m Fusion del server.js para que sirva para el login y el main
+[33m4a49b53[m Update README with team member information
+[33m3e4e38c[m cambios chicos para las rutas y el inicio de sesion
+[33m83255eb[m Personalizacion de perfil
+[33m0a75f20[m Quitar cosas innecesarias
+[33m1da594e[m inicio de sesion funcionando
+[33m5b728ae[m inicio de sesion y regsitro logica
+[33mcfa5010[m validaciones y ademas adicion de un paquete extra
+[33mac29b0d[m whoops
+[33me7d893e[m ejs
+[33ma4240e7[m Agrego el modulo de registro
+[33mafb800f[m user routes
+[33mc365eb9[m login y autenticacion
+[33mc8e1143[m acomodo inicial para el proyecto
+[33m6449d49[m FRONT COMPLETO
+[33m9c55caa[m mas archivos
+[33m046388c[m archivos base
+[33m4860713[m first commit

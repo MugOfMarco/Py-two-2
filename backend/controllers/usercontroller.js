@@ -80,8 +80,6 @@ export const login = async (req, res) => {
         }
 
         // 2. Verificar Contraseña
-        // NOTA: Si tienes usuarios viejos con contraseña plana (ej: "12345"), esto fallará.
-        // Deben ser usuarios nuevos o registrados con bcrypt.
         const passwordValida = await bcrypt.compare(password, usuario.password_hash);
         
         if (!passwordValida) {
@@ -96,7 +94,6 @@ export const login = async (req, res) => {
         );
 
         // 4. Respuesta Exitosa
-        // 🚨 IMPORTANTE: Enviamos 'id_usuario' en la raíz para que login.js lo lea fácil
         res.status(200).json({
             success: true,
             message: 'Inicio de sesión exitoso.',
@@ -112,5 +109,66 @@ export const login = async (req, res) => {
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+    }
+};
+
+// ==============================================================
+// 🆕 NUEVAS FUNCIONES PARA EL PERFIL (Edición de Datos)
+// ==============================================================
+
+/**
+ * OBTENER PERFIL (GET /api/usuarios/perfil)
+ * Se usa para rellenar el formulario con los datos actuales.
+ */
+export const obtenerPerfil = async (req, res) => {
+    try {
+        // req.user.id viene del middleware verificarToken
+        const userId = req.user.id; 
+
+        const usuario = await userModel.obtenerUsuarioPorId(userId);
+        
+        if (!usuario) {
+            return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+        }
+
+        res.json({ success: true, data: usuario });
+
+    } catch (error) {
+        console.error('Error al obtener perfil:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener perfil.' });
+    }
+};
+
+/**
+ * ACTUALIZAR PERFIL (PUT /api/usuarios/perfil)
+ * Guarda los cambios realizados en el formulario.
+ */
+export const actualizarPerfil = async (req, res) => {
+    try {
+        const userId = req.user.id; // Del token
+        const { nombre, apellido, telefono, codigo_postal } = req.body;
+
+        // Validaciones simples
+        if (!nombre || !apellido) {
+            return res.status(400).json({ success: false, message: 'El nombre y apellido son obligatorios.' });
+        }
+
+        // Llamamos al modelo para actualizar
+        const filasAfectadas = await userModel.actualizarUsuario(userId, { 
+            nombre, 
+            apellido, 
+            telefono, 
+            codigo_postal 
+        });
+
+        if (filasAfectadas === 0) {
+            return res.status(400).json({ success: false, message: 'No se pudo actualizar o no hubo cambios.' });
+        }
+
+        res.json({ success: true, message: 'Datos actualizados correctamente.' });
+
+    } catch (error) {
+        console.error('Error al actualizar perfil:', error);
+        res.status(500).json({ success: false, message: 'Error al actualizar perfil.' });
     }
 };

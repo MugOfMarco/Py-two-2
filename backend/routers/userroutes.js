@@ -1,15 +1,48 @@
-import { Router } from 'express';
+import express from 'express';
 
-// 🚨 CORRECCIÓN AQUÍ: 
-// Importamos 'login' (que es como se llama ahora en el controlador)
-import { registrarUsuario, login } from '../controllers/usercontroller.js'; 
+// 1. IMPORTAMOS CONTROLADORES
+// Nota: Importamos 'login' porque así se llama en el controlador que te pasé.
+// Si prefieres usar 'iniciarSesion', tendrías que cambiarle el nombre en el controlador.
+import { 
+    registrarUsuario, 
+    login, 
+    obtenerPerfil, 
+    actualizarPerfil 
+} from '../controllers/usercontroller.js'; 
 
-const router = Router();
+// 2. IMPORTAMOS MIDDLEWARE (SEGURIDAD)
+import { verificarToken } from '../middleware/auth.js'; 
 
-// Ruta para registrarse
-router.post('/register', registrarUsuario); // Ojo: verifica si en tu frontend llamas a /register o /registro
+const router = express.Router();
 
-// Ruta para iniciar sesión
+// ====================================================================
+// RUTAS PÚBLICAS (No requieren token)
+// ====================================================================
+
+/**
+ * @route POST /api/usuarios/registro
+ * @description Ruta para crear un nuevo usuario.
+ */
+router.post('/registro', registrarUsuario);
+
+/**
+ * @route POST /api/usuarios/login
+ * @description Ruta para autenticar al usuario.
+ * Usamos la función 'login' del controlador.
+ */
 router.post('/login', login);
 
+
+// ====================================================================
+// RUTAS PRIVADAS (Requieren 'verificarToken')
+// ====================================================================
+
+// GET: Para leer los datos actuales y llenar el formulario
+router.get('/perfil', verificarToken, obtenerPerfil);
+
+// PUT: Para guardar los cambios editados
+router.put('/perfil', verificarToken, actualizarPerfil);
+
+
+// 3. EXPORTAR AL FINAL (Siempre debe ser lo último)
 export default router;

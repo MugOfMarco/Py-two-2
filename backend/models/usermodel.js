@@ -25,7 +25,7 @@ export async function crearUsuario(nombre, apellido, email, passwordHash, telefo
  */
 export async function buscarUsuarioPorEmail(email) {
     const query = `
-        SELECT id_usuario, nombre, email, password_hash 
+        SELECT id_usuario, nombre, email, password_hash, rol 
         FROM usuarios 
         WHERE email = ?
     `;
@@ -34,22 +34,47 @@ export async function buscarUsuarioPorEmail(email) {
 }
 
 /**
- * Actualiza los datos de perfil de un usuario (ejemplo).
+ * 🆕 NUEVO: Obtiene todos los datos del perfil por ID (Sin contraseña).
+ * Usado para rellenar el formulario de "Mi Perfil".
  */
-export async function actualizarUsuario(id_usuario, datos) {
-    // Para simplificar, solo actualizamos nombre y apellido aquí
+export async function obtenerUsuarioPorId(id) {
     const query = `
-        UPDATE usuarios 
-        SET nombre = ?, apellido = ? 
+        SELECT id_usuario, nombre, apellido, email, telefono, fecha_nacimiento, codigo_postal 
+        FROM usuarios 
         WHERE id_usuario = ?
     `;
-    const [result] = await pool.execute(query, [datos.nombre, datos.apellido, id_usuario]);
+    const [rows] = await pool.execute(query, [id]);
+    return rows.length > 0 ? rows[0] : null;
+}
+
+/**
+ * 🔄 ACTUALIZADO: Actualiza los datos de perfil de un usuario.
+ * Ahora incluye teléfono y código postal.
+ */
+export async function actualizarUsuario(id_usuario, datos) {
+    const { nombre, apellido, telefono, codigo_postal } = datos;
+    
+    const query = `
+        UPDATE usuarios 
+        SET nombre = ?, apellido = ?, telefono = ?, codigo_postal = ?
+        WHERE id_usuario = ?
+    `;
+    
+    const [result] = await pool.execute(query, [
+        nombre, 
+        apellido, 
+        telefono, 
+        codigo_postal, 
+        id_usuario
+    ]);
+    
     return result.affectedRows;
 }
 
-// Exportamos todas las funciones como un objeto
+// Exportamos todas las funciones como un objeto y también individualmente
 export default {
     crearUsuario,
     buscarUsuarioPorEmail,
+    obtenerUsuarioPorId, // 👈 Agregado
     actualizarUsuario
 };
